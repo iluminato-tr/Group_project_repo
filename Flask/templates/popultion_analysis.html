@@ -1,0 +1,80 @@
+<!-- Inherits from base layout -->
+{% extends 'base.html' %}
+
+{% block title %}Population Analysis{% endblock %}
+
+{% block content %}
+    <h1>Population Analysis</h1>
+    <form method="POST" action="{{ url_for('population_analysis') }}">
+        {{ form.hidden_tag() }}
+
+        <!-- Section for choosing between Population and Superpopulation -->
+        <div class="form-group">
+            <label class="main-label">Choose a Population(s) for Analysis:</label>
+            {% for subfield in form.Pop_scope %}
+                <div class="form-check">
+                    {{ subfield() }}
+                    <label class="form-check-label" for="{{ subfield.id }}">{{ subfield.label.text }}</label>
+                </div>
+            {% endfor %}
+        </div>
+
+        <!-- Dynamically displayed superpopulations selection based on user choice -->
+        <div class="form-group" id="Pop_superpopulations" style="display:none;">
+            <label for="Pop_superpopulations">{{ form.Pop_superpopulations.label }}</label>
+            {{ form.Pop_superpopulations(class="form-control") }}
+            <small class="form-text text-muted">Hold Ctrl (or Command on Mac) / Click and drag to select multiple superpopulations.</small>
+        </div>
+
+        <!-- Dynamically displayed population selection based on user choice -->
+        <div class="form-group" id="Pop_populations" style="display:none;">
+            <label for="Pop_populations">{{ form.Pop_populations.label }}</label>
+            {{ form.Pop_populations(class="form-control") }}
+            <small class="form-text text-muted">Hold Ctrl (or Command on Mac) / Click and drag to select multiple populations.</small>
+        </div>
+
+        <!-- Submit button -->
+        <div class="form-group">
+            {{ form.Pop_submit(class="btn btn-primary") }}
+        </div>
+    </form>
+
+    <!-- JavaScript for dynamic form behaviour -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Function to clear selection when switching between population and superpopulation
+            function resetSelectElement(selectElement) {
+                selectElement.value = ''; // Clear single selection
+                for (const option of selectElement.options) { // Clear multiple selections
+                    option.selected = false;
+                }
+            }
+
+            // Function to update the display based on chosen analysis scope
+            function updateDisplay() {
+                const popQueryScopeValue = document.querySelector('input[name="Pop_scope"]:checked')?.value;
+                const popSuperpopulationsSelect = document.getElementById('Pop_superpopulations').querySelector('select');
+                const popPopulationsSelect = document.getElementById('Pop_populations').querySelector('select');
+
+                if (popQueryScopeValue === 'superpopulation') {
+                    document.getElementById('Pop_superpopulations').style.display = 'block';
+                    document.getElementById('Pop_populations').style.display = 'none';
+                    // Reset selections when changing scope
+                    resetSelectElement(popPopulationsSelect);
+                } else if (popQueryScopeValue === 'population') {
+                    document.getElementById('Pop_populations').style.display = 'block';
+                    document.getElementById('Pop_superpopulations').style.display = 'none';
+                    // Reset selections when changing scope
+                    resetSelectElement(popSuperpopulationsSelect);
+                }
+            }
+
+            // Event listeners to handle changes in the analysis scope
+            document.querySelectorAll('input[name="Pop_scope"]').forEach(radio => {
+                radio.addEventListener('change', updateDisplay);
+            });
+
+            updateDisplay(); // Initialize display settings on page load
+        });
+    </script>
+{% endblock %}

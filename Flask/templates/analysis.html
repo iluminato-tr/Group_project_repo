@@ -1,0 +1,147 @@
+<!-- Inherits from base layout -->
+{% extends 'base.html' %}
+
+{% block title %}Data Analysis{% endblock %}
+
+{% block content %}
+    <h1>SNP Analysis</h1>
+    <form method="POST" action="{{ url_for('analysis') }}">
+        {{ form.hidden_tag() }}
+
+        <!-- Section for choosing populations or superpopulations -->
+        <div class="form-group">
+            <label class="main-label">Choose a Population(s):</label>
+            {% for subfield in form.query_scope %}
+                <div class="form-check">
+                    <!-- Radio buttons for selecting scope -->
+                    {{ subfield() }}
+                    <label class="form-check-label" for="{{ subfield.id }}">{{ subfield.label.text }}</label>
+                </div>
+            {% endfor %}
+        </div>
+
+        <!-- Conditionally displayed sections for selecting specific populations or superpopulations -->
+        <div class="form-group" id="superpopulations" style="display:none;">
+            <label for="superpopulations">{{ form.superpopulations.label }}</label>
+            {{ form.superpopulations(class="form-control") }}
+            <small class="form-text text-muted">Hold Ctrl (or Command on Mac) / Click and drag to select multiple superpopulations.</small>
+        </div>
+
+        <div class="form-group" id="populations" style="display:none;">
+            <label for="populations">{{ form.populations.label }}</label>
+            {{ form.populations(class="form-control") }}
+            <small class="form-text text-muted">Hold Ctrl (or Command on Mac) / Click and drag to select multiple populations.</small>
+        </div>
+
+
+        <!-- Selection for choosing the type of SNP analysis query -->
+        <div class="form-group">
+            <label class="main-label">SNP Analysis Query Type:</label>
+            {% for subfield in form.query_type %}
+                <div class="form-check">
+                    <!-- Display options for SNP, Gene or Region queries -->
+                    {{ subfield() }}
+                    <label class="form-check-label" for="{{ subfield.id }}">{{ subfield.label.text }}</label>
+                </div>
+            {% endfor %}
+        </div>
+
+        <!-- SNP IDs field -->
+        <div id="snp_ids" class="form-group" style="display:none;">
+            {{ form.snp_ids.label }}
+            {{ form.snp_ids(class="form-control", rows=4) }}
+        </div>
+
+        <!-- Genomic Coordinates field -->
+        <div id="genomic_coords" class="form-group" style="display:none;">
+            {{ form.genomic_coords.label }}
+            {{ form.genomic_coords(class="form-control") }}
+        </div>
+
+        <!-- Gene Names field -->
+        <div id="gene_names" class="form-group" style="display:none;">
+            {{ form.gene_names.label }}
+            {{ form.gene_names(class="form-control") }}
+        </div>
+
+
+        <!-- Submit button -->
+        <div class="form-group">
+            {{ form.submit(class="btn btn-primary") }}
+        </div>
+    </form>
+
+    <!-- JavaScript to handle dynamic display and reset of form elements based on user selections -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Funcgtion to clear selections in select elements
+            function resetSelectElement(selectElement) {
+                selectElement.value = ''; // Clear single selection
+                for (const option of selectElement.options) { 
+                    option.selected = false; // Cleat multiple selections
+                }
+            }
+        
+            // Updates the display of population or superpopulation selection based on the query scope
+            function updateQueryScopeDisplay() {
+                const queryScopeValue = document.querySelector('input[name="query_scope"]:checked')?.value;
+                const superpopulationsSelect = document.getElementById('superpopulations').querySelector('select');
+                const populationsSelect = document.getElementById('populations').querySelector('select');
+                
+                // Show superpopulation selection and hide population selection if superpopulation is chosen, and vice versa
+                if (queryScopeValue === 'superpopulation') {
+                    document.getElementById('superpopulations').style.display = 'block';
+                    document.getElementById('populations').style.display = 'none';
+
+                    resetSelectElement(populationsSelect);
+                } else if (queryScopeValue === 'population') {
+                    document.getElementById('populations').style.display = 'block';
+                    document.getElementById('superpopulations').style.display = 'none';
+
+                    resetSelectElement(superpopulationsSelect);
+                }
+            }
+        
+            // Updates the display of SNP ID, genomic coordinates or gene names input baed on type selected
+            function updateQueryTypeDisplay() {
+                const queryTypeValue = document.querySelector('input[name="query_type"]:checked')?.value;
+                const snpIdsInput = document.getElementById('snp_ids').querySelector('textarea, input');
+                const genomicCoordsInput = document.getElementById('genomic_coords').querySelector('input');
+                const geneNamesInput = document.getElementById('gene_names').querySelector('input');
+                // Show relevant input field based on selected query type
+                document.getElementById('snp_ids').style.display = queryTypeValue === 'snp' ? 'block' : 'none';
+                document.getElementById('genomic_coords').style.display = queryTypeValue === 'region' ? 'block' : 'none';
+                document.getElementById('gene_names').style.display = queryTypeValue === 'gene' ? 'block' : 'none';
+        
+                // Reset inputs when changing query type
+                if (queryTypeValue !== 'snp') {
+                    snpIdsInput.value = '';
+                }
+                if (queryTypeValue !== 'region') {
+                    genomicCoordsInput.value = '';
+                }
+                if (queryTypeValue !== 'gene') {
+                    geneNamesInput.value = '';
+                }
+            }
+        
+            // Event listeners for query scope and query type to trigger display updates
+            document.querySelectorAll('input[name="query_scope"]').forEach(radio => {
+                radio.addEventListener('change', function() {
+                    updateQueryScopeDisplay();
+                });
+            });
+        
+            document.querySelectorAll('input[name="query_type"]').forEach(radio => {
+                radio.addEventListener('change', function() {
+                    updateQueryTypeDisplay();
+                });
+            });
+        
+            // Initial display updates
+            updateQueryScopeDisplay(); 
+            updateQueryTypeDisplay(); 
+        });
+        </script>
+        
+{% endblock %}
