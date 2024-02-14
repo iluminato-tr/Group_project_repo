@@ -2,6 +2,8 @@ from flask import Flask, render_template, request, redirect, url_for
 from flask_wtf import FlaskForm
 from wtforms import SelectMultipleField, SubmitField, StringField, TextAreaField, RadioField
 from wtforms.validators import Optional, DataRequired
+import pandas as pd
+import psycopg2
 
 # Initialise the Flask application & set secret key for CSRF protection
 app = Flask(__name__)
@@ -76,14 +78,14 @@ class PopulationAnalysisForm(FlaskForm):
                     ('CEU', 'CEPH - Utah residents with Northern and Western European ancestry'),
                     ('IBS', 'Iberian - Iberian populations in Spain'),
                     ('TSI', 'Toscani - Toscani in Italy'),
-                    ('GBR', 'British - British in England and Scotland'),
-                    ('SIB', 'Siberian - Siberians in Siberia')]),
+                    ('GBR', 'British - British in England and Scotland')]),
 
         ('East Asia', [('CHS', 'Southern Han Chinese - Han Chinese South'),
                        ('KHV', 'Kinh Vietnamese - Kinh in Ho Chi Minh City, Vietnam'),
                        ('JPT', 'Japanese - Japanese in Tokyo, Japan'),
                        ('CHB', 'Han Chinese - Han Chinese in Beijing, China'),
-                       ('CDX', 'Dai Chinese - Chinese Dai in Xishuangbanna, China')]),
+                       ('CDX', 'Dai Chinese - Chinese Dai in Xishuangbanna, China'),
+                       ('SIB', 'Siberian - Siberians in Siberia')]),
 
         ('South Asia', [('PJL', 'Punjabi - Punjabi in Lahore, Pakistan'),
                         ('BEB', 'Bengali - Bengali in Bangladesh'),
@@ -117,7 +119,8 @@ def analysis():
     form = SNPAnalysisForm()
     print("SNP FORM DISPLAY")
     if form.validate_on_submit():
-        # Form data processing to be completed, for now it prints input and redirects to results
+    # Form data processing to be completed, for now it prints input and redirects to results
+    
         selected_populations = request.form.getlist('populations')
         selected_superpopulations = request.form.getlist('superpopulations')
         print("Selected Populations:", selected_populations)
@@ -128,19 +131,48 @@ def analysis():
         return redirect(url_for('results'))
     return render_template('analysis.html', form=form)
 
-# Route for handling the population analysis form
-@app.route('/population_analysis', methods=['GET', 'POST'])
-def population_analysis():
-    form = PopulationAnalysisForm()
-    print("POPULATION FORM DISPLAY")
-    if form.validate_on_submit():
-        # Form data processing to be completed
-        SelPop_populations = request.form.getlist('Pop_populations')
-        SelPop_superpopulations = request.form.getlist('Pop_superpopulations')
-        print("Selected Populations:", SelPop_populations)
-        print("Selected Superpopulations:", SelPop_superpopulations)
-        return redirect(url_for('results'))
-    return render_template('population_analysis.html', form=form)
+host = "localhost"
+port = "5432"    
+user = "postgres"
+password = "Poojita15$"
+database = "populationgenetics"  
+try:
+    # Establish a connection
+    connection = psycopg2.connect(
+    host=host,
+    port=port,        
+    user=user,        
+    password=password,
+    database=database 
+    )
+    #Create a cursor object
+    cursor = connection.cursor()
+    # Route for handling the population analysis form
+    @app.route('/population_analysis', methods=['GET', 'POST'])
+    def population_analysis():
+        form = PopulationAnalysisForm()
+        print("POPULATION FORM DISPLAY")
+        if form.validate_on_submit():
+            # Form data processing to be completed
+            SelPop_populations = request.form.getlist('Pop_populations')
+            SelPop_superpopulations = request.form.getlist('Pop_superpopulations')
+
+                # SQL query to retrieve data for selected populations
+            pop_query = """
+            SELECT s.sample_id, pc.PC1, pc.PC2, pc.PC3, s.population_code, s.superpopulation_code 
+            FROM pca_results as pc
+            JOIN sample_table as s ON pc.s_id = s.sample_id;
+            WHERE s.population_code IN (%(pop)s)
+                OR s.superpopulation_code IN (%(supop)s)
+            );
+            """
+            # Execute the SQL query (replace this with your database connection and query execution logic)
+            # Example using pandas to simulate the data retrieval
+            data = pd.read_sql_query((pop_query%{'pop':SelPop_populations, 'supop':SelPop_superpopulations}), connection)
+            print("Selected Populations:", SelPop_populations)
+            print("Selected Superpopulations:", SelPop_superpopulations)
+            return redirect(url_for('results'))
+        return render_template('population_analysis.html', form=form)
 
 # Route for the home page
 @app.route('/')
