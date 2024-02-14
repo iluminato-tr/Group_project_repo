@@ -173,7 +173,8 @@ try:
             print("Selected Superpopulations:", SelPop_superpopulations)
             return redirect(url_for('results'))
         return render_template('population_analysis.html', form=form)
-
+except psycopg2.Error as e:
+    print(f"Error: Unable to connect to the PostgreSQL server. {e}")
 # Route for the home page
 @app.route('/')
 def home():
