@@ -151,26 +151,34 @@ try:
     @app.route('/population_analysis', methods=['GET', 'POST'])
     def population_analysis():
         form = PopulationAnalysisForm()
-        print("POPULATION FORM DISPLAY")
         if form.validate_on_submit():
-            # Form data processing to be completed
+            # Retrieve selected populations and superpopulations from form
             SelPop_populations = request.form.getlist('Pop_populations')
             SelPop_superpopulations = request.form.getlist('Pop_superpopulations')
+            values = ''
+            pop_query= ''
+            if len(SelPop_populations) > 0:
+                pop_query = """
+                SELECT s.sample_id, pc.PC1, pc.PC2, pc.PC3, s.population_code, s.superpopulation_code 
+                FROM pca_results as pc
+                JOIN sample_table as s ON pc.s_id = s.sample_id
+                WHERE s.population_code IN (%(val)s); 
+                """
+                values = ', '.join(["'{}'".format(value) for value in SelPop_populations])
+            else: 
+                pop_query = """
+                SELECT s.sample_id, pc.PC1, pc.PC2, pc.PC3, s.population_code, s.superpopulation_code 
+                FROM pca_results as pc
+                JOIN sample_table as s ON pc.s_id = s.sample_id
+                WHERE s.superpopulation_code IN (%(val)s);
+                """
+                values = ', '.join(["'{}'".format(value) for value in SelPop_superpopulations])
 
-                # SQL query to retrieve data for selected populations
-            pop_query = """
-            SELECT s.sample_id, pc.PC1, pc.PC2, pc.PC3, s.population_code, s.superpopulation_code 
-            FROM pca_results as pc
-            JOIN sample_table as s ON pc.s_id = s.sample_id
-            WHERE s.population_code IN (%(pop)s)
-                OR s.superpopulation_code IN (%(supop)s)
-            );
-            """
-            # Execute the SQL query (replace this with your database connection and query execution logic)
-            # Example using pandas to simulate the data retrieval
-            data = pd.read_sql_query((pop_query%{'pop':SelPop_populations, 'supop':SelPop_superpopulations}), connection)
-            print("Selected Populations:", SelPop_populations)
-            print("Selected Superpopulations:", SelPop_superpopulations)
+            data = pd.read_sql_query((pop_query%{'val':values}), connection)
+            # Rest of your code
+            
+            
+        
             return redirect(url_for('results'))
         return render_template('population_analysis.html', form=form)
 except psycopg2.Error as e:
