@@ -4,6 +4,9 @@ from wtforms import SelectMultipleField, SubmitField, StringField, TextAreaField
 from wtforms.validators import Optional, DataRequired
 import pandas as pd
 import psycopg2
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 # Initialise the Flask application & set secret key for CSRF protection
 app = Flask(__name__)
@@ -176,8 +179,45 @@ try:
 
             data = pd.read_sql_query((pop_query%{'val':values}), connection)
             # Rest of your code
-            
-            
+
+            def plot_pca(data, column_name):
+                # Get unique values (populations or superpopulations) from the specified column
+                unique_values = data['population_code'].unique()
+
+                # Create a color map based on the number of unique values
+                colors = plt.cm.get_cmap('gist_rainbow_r', len(unique_values))
+                
+                # Create a dictionary to map values to colors
+                value_colors = {val: colors(i) for i, val in enumerate(unique_values)}
+
+                # Create a new figure for the PCA plot
+                plt.figure(figsize=(10, 8))
+
+                # Iterate over each value
+                for val in unique_values:
+                    # Filter the data for the current value
+                    data_subset = data[data['population_code'] == val]
+                    
+                    # Scatter plot for the current value with specified color and label
+                    plt.scatter(data_subset['pc1'], data_subset['pc2'], color=value_colors[val], label=val, s=50)
+
+                # Set plot title and axis labels
+                plt.title(f'PCA Plot with {column_name.capitalize()} Colored')
+                plt.xlabel('Principal Component 1')
+                plt.ylabel('Principal Component 2')
+
+                # Add a legend with value labels
+                plt.legend(title=column_name.capitalize(), loc='best')
+
+                # Display the plot
+                plt.show()
+
+            # Example usage with if-else statements
+            if len(SelPop_populations) > 0:
+                plot_pca(data, 'population_code')
+            else:
+                # Plot based on superpopulations (P2)
+                plot_pca(data, 'superpopulation_code')
         
             return redirect(url_for('results'))
         return render_template('population_analysis.html', form=form)
@@ -196,3 +236,5 @@ def results():
 
 if __name__ == '__main__':
     app.run(debug=True)
+
+    
