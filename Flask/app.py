@@ -20,33 +20,33 @@ class SNPAnalysisForm(FlaskForm):
     # Define choices for populations and superpopulations for the form
     # Each tuple contains a superpopulation and its corresponding populations
     population_choices = [
-        ('Europe', [('FIN', 'Finnish - Finnish in Finland'),
+        ('EUR', [('FIN', 'Finnish - Finnish in Finland'),
                     ('CEU', 'CEPH - Utah residents with Northern and Western European ancestry'),
                     ('IBS', 'Iberian - Iberian populations in Spain'),
                     ('TSI', 'Toscani - Toscani in Italy'),
                     ('GBR', 'British - British in England and Scotland')]),
 
-        ('East Asia', [('CHS', 'Southern Han Chinese - Han Chinese South'),
+        ('EAS', [('CHS', 'Southern Han Chinese - Han Chinese South'),
                        ('KHV', 'Kinh Vietnamese - Kinh in Ho Chi Minh City, Vietnam'),
                        ('JPT', 'Japanese - Japanese in Tokyo, Japan'),
                        ('CHB', 'Han Chinese - Han Chinese in Beijing, China'),
                        ('CDX', 'Dai Chinese - Chinese Dai in Xishuangbanna, China'),
                        ('SIB', 'Siberian - Siberians in Siberia')]),
 
-        ('South Asia', [('PJL', 'Punjabi - Punjabi in Lahore, Pakistan'),
+        ('SAS', [('PJL', 'Punjabi - Punjabi in Lahore, Pakistan'),
                         ('BEB', 'Bengali - Bengali in Bangladesh'),
                         ('GIH', 'Gujarati - Gujarati Indians in Houston, TX'),
                         ('STU', 'Tamil - Sri Lankan Tamil in the UK'),
                         ('ITU', 'Telugu - Indian Telugu in UK')]),
 
-        ('Africa', [('YRI', 'Yoruba - Yoruba in Ibadan, Nigeria'),
+        ('AFR', [('YRI', 'Yoruba - Yoruba in Ibadan, Nigeria'),
                     ('LWK', 'Luhya - Luhya in Webuye, Kenya'),
                     ('ASW', 'African Ancestry - African Ancestry in Southwest US'),
                     ('GWD', 'Gambian Mandinka - Gambian in Western DIvision, The Gambia'),
                     ('MSL', 'Mende - Mende in Sierra Leone'),
                     ('ESN', 'Esan - Esan in Nigeria')]),
                     
-        ('America', [('MXL', 'Mexican Ancestry - Mexican Ancestry in Los Angeles, California'),
+        ('AMR', [('MXL', 'Mexican Ancestry - Mexican Ancestry in Los Angeles, California'),
                      ('ACB', 'African Caribbean - African Caribbean in Barbados'),
                      ('PUR', 'Puerto Rican in Puerto Rico'),
                      ('CLM', 'Colombian - Colombian in Medellin, Colombia'),
@@ -77,33 +77,33 @@ class PopulationAnalysisForm(FlaskForm):
     # Define choices for populations and superpopulations for the form
     # Each tuple contains a superpopulation and its corresponding populations
     Pop_choices = [
-        ('Europe', [('FIN', 'Finnish - Finnish in Finland'),
+        ('EUR', [('FIN', 'Finnish - Finnish in Finland'),
                     ('CEU', 'CEPH - Utah residents with Northern and Western European ancestry'),
                     ('IBS', 'Iberian - Iberian populations in Spain'),
                     ('TSI', 'Toscani - Toscani in Italy'),
                     ('GBR', 'British - British in England and Scotland')]),
 
-        ('East Asia', [('CHS', 'Southern Han Chinese - Han Chinese South'),
+        ('EAS', [('CHS', 'Southern Han Chinese - Han Chinese South'),
                        ('KHV', 'Kinh Vietnamese - Kinh in Ho Chi Minh City, Vietnam'),
                        ('JPT', 'Japanese - Japanese in Tokyo, Japan'),
                        ('CHB', 'Han Chinese - Han Chinese in Beijing, China'),
                        ('CDX', 'Dai Chinese - Chinese Dai in Xishuangbanna, China'),
                        ('SIB', 'Siberian - Siberians in Siberia')]),
 
-        ('South Asia', [('PJL', 'Punjabi - Punjabi in Lahore, Pakistan'),
+        ('SAS', [('PJL', 'Punjabi - Punjabi in Lahore, Pakistan'),
                         ('BEB', 'Bengali - Bengali in Bangladesh'),
                         ('GIH', 'Gujarati - Gujarati Indians in Houston, TX'),
                         ('STU', 'Tamil - Sri Lankan Tamil in the UK'),
                         ('ITU', 'Telugu - Indian Telugu in UK')]),
 
-        ('Africa', [('YRI', 'Yoruba - Yoruba in Ibadan, Nigeria'),
+        ('AFR', [('YRI', 'Yoruba - Yoruba in Ibadan, Nigeria'),
                     ('LWK', 'Luhya - Luhya in Webuye, Kenya'),
                     ('ASW', 'African Ancestry - African Ancestry in Southwest US'),
                     ('GWD', 'Gambian Mandinka - Gambian in Western DIvision, The Gambia'),
                     ('MSL', 'Mende - Mende in Sierra Leone'),
                     ('ESN', 'Esan - Esan in Nigeria')]),
                     
-        ('America', [('MXL', 'Mexican Ancestry - Mexican Ancestry in Los Angeles, California'),
+        ('AMR', [('MXL', 'Mexican Ancestry - Mexican Ancestry in Los Angeles, California'),
                      ('ACB', 'African Caribbean - African Caribbean in Barbados'),
                      ('PUR', 'Puerto Rican in Puerto Rico'),
                      ('CLM', 'Colombian - Colombian in Medellin, Colombia'),
@@ -162,7 +162,7 @@ try:
             pop_query= ''
             if len(SelPop_populations) > 0:
                 pop_query = """
-                SELECT s.sample_id, pc.PC1, pc.PC2, pc.PC3, s.population_code, s.superpopulation_code 
+                SELECT s.sample_id, pc.PC1, pc.PC2, s.population_code, s.superpopulation_code 
                 FROM pca_results as pc
                 JOIN sample_table as s ON pc.s_id = s.sample_id
                 WHERE s.population_code IN (%(val)s); 
@@ -170,7 +170,7 @@ try:
                 values = ', '.join(["'{}'".format(value) for value in SelPop_populations])
             else: 
                 pop_query = """
-                SELECT s.sample_id, pc.PC1, pc.PC2, pc.PC3, s.population_code, s.superpopulation_code 
+                SELECT s.sample_id, pc.PC1, pc.PC2, s.population_code, s.superpopulation_code 
                 FROM pca_results as pc
                 JOIN sample_table as s ON pc.s_id = s.sample_id
                 WHERE s.superpopulation_code IN (%(val)s);
@@ -179,10 +179,16 @@ try:
 
             data = pd.read_sql_query((pop_query%{'val':values}), connection)
             # Rest of your code
+            print(data)
 
             def plot_pca(data, column_name):
+                unique_values=[]
+                data_subset=[]
                 # Get unique values (populations or superpopulations) from the specified column
-                unique_values = data['population_code'].unique()
+                if len(SelPop_populations) > 0:
+                    unique_values = data['population_code'].unique()
+                else: 
+                    unique_values = data['superpopulation_code'].unique()
 
                 # Create a color map based on the number of unique values
                 colors = plt.cm.get_cmap('gist_rainbow_r', len(unique_values))
@@ -195,30 +201,38 @@ try:
 
                 # Iterate over each value
                 for val in unique_values:
-                    # Filter the data for the current value
-                    data_subset = data[data['population_code'] == val]
-                    
+                    if len(SelPop_populations) > 0:
+                        #filter data for population
+                        data_subset = data[data['population_code'] == val]
+                    else: 
+                        data_subset = data[data['superpopulation_code'] == val]
+        
+                    valx = []
+                    valy =[]
+                    for dt in data_subset['pc1']:
+                        valx.append(float(dt))
+                    for dt in data_subset['pc2']:
+                        valy.append(float(dt)) 
                     # Scatter plot for the current value with specified color and label
-                    plt.scatter(data_subset['pc1'], data_subset['pc2'], color=value_colors[val], label=val, s=50)
-
+                    plt.scatter(valx, valy, color=value_colors[val], label=val, s=50)
                 # Set plot title and axis labels
-                plt.title(f'PCA Plot with {column_name.capitalize()} Colored')
+                plt.title('PCA Plot with Populations Colored')
                 plt.xlabel('Principal Component 1')
-                plt.ylabel('Principal Component 2')
+                plt.ylabel('Principal Component 2') 
 
                 # Add a legend with value labels
-                plt.legend(title=column_name.capitalize(), loc='best')
+                plt.legend(title='Population', loc='best')
 
                 # Display the plot
-                plt.show()
+                plt.show() 
 
             # Example usage with if-else statements
             if len(SelPop_populations) > 0:
                 plot_pca(data, 'population_code')
             else:
                 # Plot based on superpopulations (P2)
-                plot_pca(data, 'superpopulation_code')
-        
+                plot_pca(data, 'superpopulation_code') 
+      
             return redirect(url_for('results'))
         return render_template('population_analysis.html', form=form)
 except psycopg2.Error as e:
