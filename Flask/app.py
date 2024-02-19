@@ -179,7 +179,6 @@ try:
 
             data = pd.read_sql_query((pop_query%{'val':values}), connection)
             # Rest of your code
-            print(data)
 
             def plot_pca(data, column_name):
                 unique_values=[]
@@ -216,12 +215,12 @@ try:
                     # Scatter plot for the current value with specified color and label
                     plt.scatter(valx, valy, color=value_colors[val], label=val, s=50)
                 # Set plot title and axis labels
-                plt.title('PCA Plot with Populations Colored')
+                plt.title(f'PCA Plot with {column_name.capitalize()}')
                 plt.xlabel('Principal Component 1')
                 plt.ylabel('Principal Component 2') 
 
                 # Add a legend with value labels
-                plt.legend(title='Population', loc='best')
+                plt.legend(title=column_name.capitalize(), loc='best')
 
                 # Display the plot
                 plt.show() 
