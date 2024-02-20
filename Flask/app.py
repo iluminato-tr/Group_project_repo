@@ -6,7 +6,6 @@ import pandas as pd
 import psycopg2
 import numpy as np
 import matplotlib.pyplot as plt
-import seaborn as sns
 
 # Initialise the Flask application & set secret key for CSRF protection
 app = Flask(__name__)
@@ -231,7 +230,84 @@ try:
             else:
                 # Plot based on superpopulations (P2)
                 plot_pca(data, 'superpopulation_code') 
-      
+            
+            value1 = ''
+            adm_query= ''
+
+            if len(SelPop_populations) > 0:
+                adm_query = """
+                SELECT s.sample_id, s.population_code, s.superpopulation_code, a.P1, a.P2, a.P3, a.P4, a.P5
+                FROM sample_table s
+                JOIN adm_q a ON s.sample_id = a.sample_id
+                WHERE s.population_code IN (%(val)s); 
+                """
+                value1 = ', '.join(["'{}'".format(value) for value in SelPop_populations])
+            else: 
+                adm_query = """
+                SELECT s.sample_id, s.population_code, s.superpopulation_code, a.P1, a.P2, a.P3, a.P4, a.P5
+                FROM sample_table s
+                JOIN adm_q a ON s.sample_id = a.sample_id
+                WHERE s.superpopulation_code IN (%(val)s);
+                """
+                value1 = ', '.join(["'{}'".format(value) for value in SelPop_superpopulations])
+
+            data1 = pd.read_sql_query((adm_query%{'val':value1}), connection)
+
+            print(data1)
+            # Rest of your code
+
+            def plot_adm(data1, column_name):
+                unique_values1=[]
+                data_subset1=[]
+                # Get unique values (populations or superpopulations) from the specified column
+                if len(SelPop_populations) > 0:
+                    unique_values1 = data1['population_code'].unique()
+                else: 
+                    unique_values1 = data1['superpopulation_code'].unique()
+
+                # Calculate proportions
+                proportions = {}
+                for val in unique_values1:
+                    if len(SelPop_populations) > 0:
+                        #filter data for population
+                        data_subset1=data1[data1['population_code'] == val]
+                        pop_proportions = data_subset1[['p1', 'p2', 'p3', 'p4', 'p5']].mean() * 100
+                        proportions[val] = pop_proportions
+                    else: 
+                        data_subset1=data1[data1['superpopulation_code'] == val]
+                        suppop_proportions = data_subset1[['p1', 'p2', 'p3', 'p4', 'p5']].mean() * 100
+                        proportions[val] = suppop_proportions
+                
+                print(pop_proportions)
+                print(suppop_proportions)
+                # Prepare heatmap data
+                heatmap_data = np.array([proportions[val] for val in unique_values1])
+
+                print(heatmap_data)
+
+                # Plot heatmap
+                plt.figure(figsize=(10, 8))
+                plt.imshow(heatmap_data, cmap='plasma', aspect='auto')
+
+                # Customize plot
+                plt.colorbar(label='Proportion')
+                plt.title('Ancestral Proportions by ' + column_name.capitalize())
+                plt.xlabel('Ancestral Population')
+                plt.ylabel(column_name.capitalize())
+                plt.xticks(np.arange(len(proportions[val])), proportions[val].index)
+                plt.yticks(np.arange(len(unique_values1)), unique_values1)
+                plt.xticks(rotation=45)
+
+                # Show plot
+                plt.tight_layout()
+                plt.show()
+
+            if len(SelPop_populations) > 0:
+                plot_adm(data1, 'population_code')
+            else:
+                # Plot based on superpopulations (P2)
+                plot_adm(data1, 'superpopulation_code') 
+
             return redirect(url_for('results'))
         return render_template('population_analysis.html', form=form)
 except psycopg2.Error as e:
