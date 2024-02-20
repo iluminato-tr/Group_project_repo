@@ -77,33 +77,33 @@ class PopulationAnalysisForm(FlaskForm):
     # Define choices for populations and superpopulations for the form
     # Each tuple contains a superpopulation and its corresponding populations
     Pop_choices = [
-        ('EUR', [('FIN', 'Finnish - Finnish in Finland'),
+        ([('EUR','Europe')], [('FIN', 'Finnish - Finnish in Finland'),
                     ('CEU', 'CEPH - Utah residents with Northern and Western European ancestry'),
                     ('IBS', 'Iberian - Iberian populations in Spain'),
                     ('TSI', 'Toscani - Toscani in Italy'),
                     ('GBR', 'British - British in England and Scotland')]),
 
-        ('EAS', [('CHS', 'Southern Han Chinese - Han Chinese South'),
+        ([('EAS','East Asia')], [('CHS', 'Southern Han Chinese - Han Chinese South'),
                        ('KHV', 'Kinh Vietnamese - Kinh in Ho Chi Minh City, Vietnam'),
                        ('JPT', 'Japanese - Japanese in Tokyo, Japan'),
                        ('CHB', 'Han Chinese - Han Chinese in Beijing, China'),
                        ('CDX', 'Dai Chinese - Chinese Dai in Xishuangbanna, China'),
                        ('SIB', 'Siberian - Siberians in Siberia')]),
 
-        ('SAS', [('PJL', 'Punjabi - Punjabi in Lahore, Pakistan'),
+        ([('SAS','South Asia')], [('PJL', 'Punjabi - Punjabi in Lahore, Pakistan'),
                         ('BEB', 'Bengali - Bengali in Bangladesh'),
                         ('GIH', 'Gujarati - Gujarati Indians in Houston, TX'),
                         ('STU', 'Tamil - Sri Lankan Tamil in the UK'),
                         ('ITU', 'Telugu - Indian Telugu in UK')]),
 
-        ('AFR', [('YRI', 'Yoruba - Yoruba in Ibadan, Nigeria'),
+        ([('AFR','Africa')], [('YRI', 'Yoruba - Yoruba in Ibadan, Nigeria'),
                     ('LWK', 'Luhya - Luhya in Webuye, Kenya'),
                     ('ASW', 'African Ancestry - African Ancestry in Southwest US'),
                     ('GWD', 'Gambian Mandinka - Gambian in Western DIvision, The Gambia'),
                     ('MSL', 'Mende - Mende in Sierra Leone'),
                     ('ESN', 'Esan - Esan in Nigeria')]),
                     
-        ('AMR', [('MXL', 'Mexican Ancestry - Mexican Ancestry in Los Angeles, California'),
+        ([('AMR','America')], [('MXL', 'Mexican Ancestry - Mexican Ancestry in Los Angeles, California'),
                      ('ACB', 'African Caribbean - African Caribbean in Barbados'),
                      ('PUR', 'Puerto Rican in Puerto Rico'),
                      ('CLM', 'Colombian - Colombian in Medellin, Colombia'),
@@ -111,7 +111,7 @@ class PopulationAnalysisForm(FlaskForm):
 
     ]
 
-    Pop_superpopulations = SelectMultipleField('Select Superpopulations', choices=[(group[0], group[0]) for group in Pop_choices], validators=[Optional()])
+    Pop_superpopulations = SelectMultipleField('Select Superpopulations', choices=[(id, name) for group in Pop_choices for id, name in group[0]], validators=[Optional()])
     Pop_populations = SelectMultipleField('Select Populations', choices=[(id, name) for group in Pop_choices for id, name in group[1]], validators=[Optional()])
     Pop_submit = SubmitField('Analyse Population')
 
