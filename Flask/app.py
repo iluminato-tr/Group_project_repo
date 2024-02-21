@@ -2,14 +2,15 @@ from flask import Flask, render_template, request, redirect, url_for
 from flask_wtf import FlaskForm
 from wtforms import SelectMultipleField, SubmitField, StringField, TextAreaField, RadioField
 from wtforms.validators import Optional, DataRequired
-import pandas as pd
-import psycopg2
-import numpy as np
-import matplotlib.pyplot as plt
+import helper
+from Group_project_repo.SQL.database import setup, close
 
 # Initialise the Flask application & set secret key for CSRF protection
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'sdfgklhjersjio49430-9534-5'
+
+# Setup DB connection
+cursor, connection = setup()
 
 # Define form for SNP analysis queries
 class SNPAnalysisForm(FlaskForm):
@@ -19,33 +20,33 @@ class SNPAnalysisForm(FlaskForm):
     # Define choices for populations and superpopulations for the form
     # Each tuple contains a superpopulation and its corresponding populations
     population_choices = [
-        ('EUR', [('FIN', 'Finnish - Finnish in Finland'),
+        ([('EUR','Europe')], [('FIN', 'Finnish - Finnish in Finland'),
                     ('CEU', 'CEPH - Utah residents with Northern and Western European ancestry'),
                     ('IBS', 'Iberian - Iberian populations in Spain'),
                     ('TSI', 'Toscani - Toscani in Italy'),
                     ('GBR', 'British - British in England and Scotland')]),
 
-        ('EAS', [('CHS', 'Southern Han Chinese - Han Chinese South'),
+        ([('EAS','East Asia')], [('CHS', 'Southern Han Chinese - Han Chinese South'),
                        ('KHV', 'Kinh Vietnamese - Kinh in Ho Chi Minh City, Vietnam'),
                        ('JPT', 'Japanese - Japanese in Tokyo, Japan'),
                        ('CHB', 'Han Chinese - Han Chinese in Beijing, China'),
                        ('CDX', 'Dai Chinese - Chinese Dai in Xishuangbanna, China'),
                        ('SIB', 'Siberian - Siberians in Siberia')]),
 
-        ('SAS', [('PJL', 'Punjabi - Punjabi in Lahore, Pakistan'),
+        ([('SAS','South Asia')], [('PJL', 'Punjabi - Punjabi in Lahore, Pakistan'),
                         ('BEB', 'Bengali - Bengali in Bangladesh'),
                         ('GIH', 'Gujarati - Gujarati Indians in Houston, TX'),
                         ('STU', 'Tamil - Sri Lankan Tamil in the UK'),
                         ('ITU', 'Telugu - Indian Telugu in UK')]),
 
-        ('AFR', [('YRI', 'Yoruba - Yoruba in Ibadan, Nigeria'),
+        ([('AFR','Africa')], [('YRI', 'Yoruba - Yoruba in Ibadan, Nigeria'),
                     ('LWK', 'Luhya - Luhya in Webuye, Kenya'),
                     ('ASW', 'African Ancestry - African Ancestry in Southwest US'),
                     ('GWD', 'Gambian Mandinka - Gambian in Western DIvision, The Gambia'),
                     ('MSL', 'Mende - Mende in Sierra Leone'),
                     ('ESN', 'Esan - Esan in Nigeria')]),
                     
-        ('AMR', [('MXL', 'Mexican Ancestry - Mexican Ancestry in Los Angeles, California'),
+        ([('AMR','America')], [('MXL', 'Mexican Ancestry - Mexican Ancestry in Los Angeles, California'),
                      ('ACB', 'African Caribbean - African Caribbean in Barbados'),
                      ('PUR', 'Puerto Rican in Puerto Rico'),
                      ('CLM', 'Colombian - Colombian in Medellin, Colombia'),
@@ -54,7 +55,7 @@ class SNPAnalysisForm(FlaskForm):
     ]
 
     # Fields for selecting superpopulations and populations
-    superpopulations = SelectMultipleField('Select Superpopulations', choices=[(group[0], group[0]) for group in population_choices], validators=[Optional()])
+    superpopulations = SelectMultipleField('Select Superpopulations', choices=[(id, name) for group in population_choices for id, name in group[0]], validators=[Optional()])
     populations = SelectMultipleField('Select Populations', choices=[(id, name) for group in population_choices for id, name in group[1]], validators=[Optional()])
 
     # Allows selection of query type
@@ -114,6 +115,40 @@ class PopulationAnalysisForm(FlaskForm):
     Pop_populations = SelectMultipleField('Select Populations', choices=[(id, name) for group in Pop_choices for id, name in group[1]], validators=[Optional()])
     Pop_submit = SubmitField('Analyse Population')
 
+# Route for handling the population analysis form
+@app.route('/population_analysis', methods=['GET', 'POST'])
+def population_analysis(connection):
+    form = PopulationAnalysisForm()
+    if form.validate_on_submit():
+        # Retrieve selected populations and superpopulations from form
+        SelPop_populations = request.form.getlist('Pop_populations')
+        SelPop_superpopulations = request.form.getlist('Pop_superpopulations')
+        data = helper.get_population_data(SelPop_populations, SelPop_superpopulations, connection)
+        data1 = helper.get_pop_data(SelPop_populations, SelPop_superpopulations, connection)
+        """
+        call method to do plot pca result
+
+        """
+    
+        if len(SelPop_populations) > 0:
+            helper.plot_pca(data, 'population_code')
+        else:
+            # Plot based on superpopulations (P2)
+            helper.plot_pca(data, 'superpopulation_code') 
+        
+        """
+        call method to plot admixture result
+
+        """
+
+        if len(SelPop_populations) > 0:
+            helper.plot_adm(data1, 'population_code')
+        else:
+            # Plot based on superpopulations (P2)
+            helper.plot_adm(data1, 'superpopulation_code') 
+
+        return redirect(url_for('results'))
+    return render_template('population_analysis.html', form=form)
 
 # Route for handling SNP analysis form
 @app.route('/analysis', methods=['GET', 'POST'])
@@ -125,193 +160,12 @@ def analysis():
     
         selected_populations = request.form.getlist('populations')
         selected_superpopulations = request.form.getlist('superpopulations')
-        print("Selected Populations:", selected_populations)
-        print("Selected Superpopulations:", selected_superpopulations)
-        print("SNP IDs:", form.snp_ids.data)
-        print("Genomic Coordinates:", form.genomic_coords.data)
-        print("Gene Names:", form.gene_names.data)
-        return redirect(url_for('results'))
+        selected_SNPid = request.form.getlist('SNPID')
+        selected_gene = request.form.getlist('gene')
+        selected_genomic_coordinate= request.form.getlist('genomic_coordinate')
+
     return render_template('analysis.html', form=form)
 
-host = "localhost"
-port = "5432"    
-user = "postgres"
-password = "Poojita15$"
-database = "populationgenetics"  
-try:
-    # Establish a connection
-    connection = psycopg2.connect(
-    host=host,
-    port=port,        
-    user=user,        
-    password=password,
-    database=database 
-    )
-    #Create a cursor object
-    cursor = connection.cursor()
-    # Route for handling the population analysis form
-    @app.route('/population_analysis', methods=['GET', 'POST'])
-    def population_analysis():
-        form = PopulationAnalysisForm()
-        if form.validate_on_submit():
-            # Retrieve selected populations and superpopulations from form
-            SelPop_populations = request.form.getlist('Pop_populations')
-            SelPop_superpopulations = request.form.getlist('Pop_superpopulations')
-            values = ''
-            pop_query= ''
-            if len(SelPop_populations) > 0:
-                pop_query = """
-                SELECT s.sample_id, pc.PC1, pc.PC2, s.population_code, s.superpopulation_code 
-                FROM pca_results as pc
-                JOIN sample_table as s ON pc.s_id = s.sample_id
-                WHERE s.population_code IN (%(val)s); 
-                """
-                values = ', '.join(["'{}'".format(value) for value in SelPop_populations])
-            else: 
-                pop_query = """
-                SELECT s.sample_id, pc.PC1, pc.PC2, s.population_code, s.superpopulation_code 
-                FROM pca_results as pc
-                JOIN sample_table as s ON pc.s_id = s.sample_id
-                WHERE s.superpopulation_code IN (%(val)s);
-                """
-                values = ', '.join(["'{}'".format(value) for value in SelPop_superpopulations])
-
-            data = pd.read_sql_query((pop_query%{'val':values}), connection)
-            # Rest of your code
-
-            def plot_pca(data, column_name):
-                unique_values=[]
-                data_subset=[]
-                # Get unique values (populations or superpopulations) from the specified column
-                if len(SelPop_populations) > 0:
-                    unique_values = data['population_code'].unique()
-                else: 
-                    unique_values = data['superpopulation_code'].unique()
-
-                # Create a color map based on the number of unique values
-                colors = plt.cm.get_cmap('gist_rainbow_r', len(unique_values))
-                
-                # Create a dictionary to map values to colors
-                value_colors = {val: colors(i) for i, val in enumerate(unique_values)}
-
-                # Create a new figure for the PCA plot
-                plt.figure(figsize=(10, 8))
-
-                # Iterate over each value
-                for val in unique_values:
-                    if len(SelPop_populations) > 0:
-                        #filter data for population
-                        data_subset = data[data['population_code'] == val]
-                    else: 
-                        data_subset = data[data['superpopulation_code'] == val]
-        
-                    valx = []
-                    valy =[]
-                    for dt in data_subset['pc1']:
-                        valx.append(float(dt))
-                    for dt in data_subset['pc2']:
-                        valy.append(float(dt)) 
-                    # Scatter plot for the current value with specified color and label
-                    plt.scatter(valx, valy, color=value_colors[val], label=val, s=50)
-                # Set plot title and axis labels
-                plt.title(f'PCA Plot with {column_name.capitalize()}')
-                plt.xlabel('Principal Component 1')
-                plt.ylabel('Principal Component 2') 
-
-                # Add a legend with value labels
-                plt.legend(title=column_name.capitalize(), loc='best')
-
-                # Display the plot
-                plt.show() 
-
-            # Example usage with if-else statements
-            if len(SelPop_populations) > 0:
-                plot_pca(data, 'population_code')
-            else:
-                # Plot based on superpopulations (P2)
-                plot_pca(data, 'superpopulation_code') 
-            
-            value1 = ''
-            adm_query= ''
-
-            if len(SelPop_populations) > 0:
-                adm_query = """
-                SELECT s.sample_id, s.population_code, s.superpopulation_code, a.P1, a.P2, a.P3, a.P4, a.P5
-                FROM sample_table s
-                JOIN adm_q a ON s.sample_id = a.sample_id
-                WHERE s.population_code IN (%(val)s); 
-                """
-                value1 = ', '.join(["'{}'".format(value) for value in SelPop_populations])
-            else: 
-                adm_query = """
-                SELECT s.sample_id, s.population_code, s.superpopulation_code, a.P1, a.P2, a.P3, a.P4, a.P5
-                FROM sample_table s
-                JOIN adm_q a ON s.sample_id = a.sample_id
-                WHERE s.superpopulation_code IN (%(val)s);
-                """
-                value1 = ', '.join(["'{}'".format(value) for value in SelPop_superpopulations])
-
-            data1 = pd.read_sql_query((adm_query%{'val':value1}), connection)
-
-            print(data1)
-            # Rest of your code
-
-            def plot_adm(data1, column_name):
-                unique_values1=[]
-                data_subset1=[]
-                # Get unique values (populations or superpopulations) from the specified column
-                if len(SelPop_populations) > 0:
-                    unique_values1 = data1['population_code'].unique()
-                else: 
-                    unique_values1 = data1['superpopulation_code'].unique()
-
-                # Calculate proportions
-                proportions = {}
-                for val in unique_values1:
-                    if len(SelPop_populations) > 0:
-                        #filter data for population
-                        data_subset1=data1[data1['population_code'] == val]
-                        pop_proportions = data_subset1[['p1', 'p2', 'p3', 'p4', 'p5']].mean() * 100
-                        proportions[val] = pop_proportions
-                    else: 
-                        data_subset1=data1[data1['superpopulation_code'] == val]
-                        suppop_proportions = data_subset1[['p1', 'p2', 'p3', 'p4', 'p5']].mean() * 100
-                        proportions[val] = suppop_proportions
-                
-                print(pop_proportions)
-                print(suppop_proportions)
-                # Prepare heatmap data
-                heatmap_data = np.array([proportions[val] for val in unique_values1])
-
-                print(heatmap_data)
-
-                # Plot heatmap
-                plt.figure(figsize=(10, 8))
-                plt.imshow(heatmap_data, cmap='plasma', aspect='auto')
-
-                # Customize plot
-                plt.colorbar(label='Proportion')
-                plt.title('Ancestral Proportions by ' + column_name.capitalize())
-                plt.xlabel('Ancestral Population')
-                plt.ylabel(column_name.capitalize())
-                plt.xticks(np.arange(len(proportions[val])), proportions[val].index)
-                plt.yticks(np.arange(len(unique_values1)), unique_values1)
-                plt.xticks(rotation=45)
-
-                # Show plot
-                plt.tight_layout()
-                plt.show()
-
-            if len(SelPop_populations) > 0:
-                plot_adm(data1, 'population_code')
-            else:
-                # Plot based on superpopulations (P2)
-                plot_adm(data1, 'superpopulation_code') 
-
-            return redirect(url_for('results'))
-        return render_template('population_analysis.html', form=form)
-except psycopg2.Error as e:
-    print(f"Error: Unable to connect to the PostgreSQL server. {e}")
 # Route for the home page
 @app.route('/')
 def home():
@@ -321,6 +175,8 @@ def home():
 @app.route('/results')
 def results():
     return render_template('results.html')
+
+close(cursor, connection)
 
 
 if __name__ == '__main__':
