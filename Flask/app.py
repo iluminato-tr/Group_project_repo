@@ -3,7 +3,7 @@ from flask_wtf import FlaskForm
 from wtforms import SelectMultipleField, SubmitField, StringField, TextAreaField, RadioField
 from wtforms.validators import Optional, DataRequired
 import helper
-from Group_project_repo.SQL.database import setup, close
+from database import setup, close
 
 # Initialise the Flask application & set secret key for CSRF protection
 app = Flask(__name__)
@@ -117,7 +117,7 @@ class PopulationAnalysisForm(FlaskForm):
 
 # Route for handling the population analysis form
 @app.route('/population_analysis', methods=['GET', 'POST'])
-def population_analysis(connection):
+def population_analysis():
     form = PopulationAnalysisForm()
     if form.validate_on_submit():
         # Retrieve selected populations and superpopulations from form
@@ -131,10 +131,10 @@ def population_analysis(connection):
         """
     
         if len(SelPop_populations) > 0:
-            helper.plot_pca(data, 'population_code')
+            helper.plot_pca(data, 'population_code', SelPop_populations)
         else:
             # Plot based on superpopulations (P2)
-            helper.plot_pca(data, 'superpopulation_code') 
+            helper.plot_pca(data, 'superpopulation_code', SelPop_populations) 
         
         """
         call method to plot admixture result
@@ -142,10 +142,10 @@ def population_analysis(connection):
         """
 
         if len(SelPop_populations) > 0:
-            helper.plot_adm(data1, 'population_code')
+            helper.plot_adm(data1, 'population_code', SelPop_populations)
         else:
             # Plot based on superpopulations (P2)
-            helper.plot_adm(data1, 'superpopulation_code') 
+            helper.plot_adm(data1, 'superpopulation_code', SelPop_populations) 
 
         return redirect(url_for('results'))
     return render_template('population_analysis.html', form=form)
@@ -160,9 +160,9 @@ def analysis():
     
         selected_populations = request.form.getlist('populations')
         selected_superpopulations = request.form.getlist('superpopulations')
-        selected_SNPid = request.form.getlist('SNPID')
-        selected_gene = request.form.getlist('gene')
-        selected_genomic_coordinate= request.form.getlist('genomic_coordinate')
+        selected_SNPid = request.form.getlist('snp_ids')
+        selected_gene = request.form.getlist('gene_names')
+        selected_genomic_coordinate= request.form.getlist('genomic_coords')
 
     return render_template('analysis.html', form=form)
 
@@ -176,10 +176,9 @@ def home():
 def results():
     return render_template('results.html')
 
-close(cursor, connection)
-
-
 if __name__ == '__main__':
     app.run(debug=True)
+
+close(cursor, connection)
 
     
