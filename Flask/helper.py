@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 
 def get_population_data(SelPop_populations, SelPop_superpopulations, connection):
     """
-    This method gets popualtion data for pca analysis. 
+    This method gets population data for pca analysis. 
     """
     values = ''
     pop_query= ''
@@ -112,22 +112,13 @@ def plot_adm(data1, column_name, SelPop_populations):
         if len(SelPop_populations) > 0:
             #filter data for population
             data_subset1=data1[data1['population_code'] == val]
-            print("Population code\n")
-            print(data_subset1)
-            print(type(data_subset1))
-            pop_proportions = data_subset1['p1', 'p2', 'p3', 'p4', 'p5'].mean() * 100
+            pop_proportions = data_subset1[['p1', 'p2', 'p3', 'p4', 'p5']].mean() * 100
             proportions[val] = pop_proportions
         else: 
             data_subset1=data1[data1['superpopulation_code'] == val]
-            print("Superpoplation code\n")
-            print(data_subset1)
-            print(type(data_subset1))
-            suppop_proportions = data_subset1['p1', 'p2', 'p3', 'p4', 'p5'].mean() * 100
+            suppop_proportions = data_subset1[['p1', 'p2', 'p3', 'p4', 'p5']].mean() * 100
             proportions[val] = suppop_proportions
-    
-    print(pop_proportions)
-    print(suppop_proportions)
-    # Prepare heatmap data
+
     heatmap_data = np.array([proportions[val] for val in unique_values1])
 
     print(heatmap_data)
@@ -150,3 +141,29 @@ def plot_adm(data1, column_name, SelPop_populations):
     plt.show()
 
     return
+
+def get_snpId_data(selected_populations, selected_superpopulations, connection):
+    """
+    This method gets clinical data, genotypic and allele frequencies for snpID's. 
+    """
+    value2 = ''
+    snpclinical_query= ''
+    if len(selected_populations) > 0:
+        snpclinical_query = """
+        SELECT s.sample_id, pc.PC1, pc.PC2, s.population_code, s.superpopulation_code 
+        FROM pca as pc
+        JOIN sample_table as s ON pc.s_id = s.sample_id
+        WHERE s.population_code IN (%(val)s); 
+        """
+        value2 = ', '.join(["'{}'".format(value) for value in selected_populations])
+    else: 
+        snpclinical_query = """
+        SELECT s.sample_id, pc.PC1, pc.PC2, s.population_code, s.superpopulation_code 
+        FROM pca as pc
+        JOIN sample_table as s ON pc.s_id = s.sample_id
+        WHERE s.superpopulation_code IN (%(val)s);
+        """
+        value2 = ', '.join(["'{}'".format(value) for value in selected_superpopulations])
+
+    data3 = pd.read_sql_query((snpclinical_query%{'val':value2}), connection)
+    return data3
