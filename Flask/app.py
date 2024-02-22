@@ -163,9 +163,9 @@ def analysis():
     
         selected_populations = request.form.getlist('populations')
         selected_superpopulations = request.form.getlist('superpopulations')
-        selected_SNPid = request.form.getlist('snp_ids')
-        selected_gene = request.form.getlist('gene_names')
-        selected_genomic_coordinate= request.form.getlist('genomic_coords')
+        selected_SNPid = request.form.get('snp_ids')
+        selected_gene = request.form.get('gene_names')
+        selected_genomic_coordinate= request.form.get('genomic_coords')
 
     return render_template('analysis.html', form=form)
 
