@@ -9,7 +9,7 @@
     {% if pca_image %}
         <div id="pca-results">
             <h2>PCA Results</h2>
-            <img src="{{ url_for('static', filename=pca_image) }}" alt="PCA Results" style="max-width: 100%;">
+            <img src="{{ url_for('static', filename='images/' + pca_image) }}" alt="PCA Results" style="max-width: 100%;">
         </div>
     {% endif %}
 
@@ -17,7 +17,7 @@
     {% if adm_image %}
         <div id="admixture-results">
             <h2>ADMIXTURE Results</h2>
-            <img src="{{ url_for('static', filename=adm_image) }}" alt="ADMIXTURE Results" style="max-width: 100%;">
+            <img src="{{ url_for('static', filename='images/' + adm_image) }}" alt="ADMIXTURE Results" style="max-width: 100%;">
         </div>
     {% endif %}
 
