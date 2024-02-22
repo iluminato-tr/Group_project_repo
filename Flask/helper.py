@@ -1,7 +1,7 @@
-
-import os
 import pandas as pd
 import numpy as np
+import matplotlib
+matplotlib.use('Agg') # Set the backend to 'Agg' before importing pyplot
 import matplotlib.pyplot as plt
 
 
