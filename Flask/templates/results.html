@@ -5,17 +5,21 @@
 {% block content %}
     <h1>Analysis Results</h1>
     
-    <!-- Placeholder for Clustering Analysis Results -->
-    <div id="clustering-results">
-        <h2>Clustering Analysis</h2>
-        <p>Results for the clustering analysis will be displayed here.</p>
-    </div>
+    <!-- Display PCA Results if available -->
+    {% if pca_image %}
+        <div id="pca-results">
+            <h2>PCA Results</h2>
+            <img src="{{ url_for('static', filename=pca_image) }}" alt="PCA Results" style="max-width: 100%;">
+        </div>
+    {% endif %}
 
-    <!-- Placeholder for Admixture Analysis Results -->
-    <div id="admixture-results">
-        <h2>Admixture Analysis</h2>
-        <p>Results for the admixture analysis will be displayed here.</p>
-    </div>
+    <!-- Display ADMIXTURE Results if available -->
+    {% if adm_image %}
+        <div id="admixture-results">
+            <h2>ADMIXTURE Results</h2>
+            <img src="{{ url_for('static', filename=adm_image) }}" alt="ADMIXTURE Results" style="max-width: 100%;">
+        </div>
+    {% endif %}
 
     <!-- Placeholder for SNP/Gene/Region Query Results -->
     <div id="query-results">
@@ -27,12 +31,6 @@
     <div id="genetic-diff-visualization">
         <h2>Genetic Differentiation Visualization</h2>
         <p>A visual representation of genetic differentiation will be presented here.</p>
-    </div>
-
-    <!-- Placeholder for Downloadable Results -->
-    <div id="download-results">
-        <h2>Download Results</h2>
-        <p>If requested to download results, a link will be provided here once the analysis is complete.</p>
     </div>
 
 {% endblock %}
