@@ -28,5 +28,3 @@ def close(cursor, connection):
     print("Connection closed.")
 
     return
-
-# TEST
