@@ -129,12 +129,15 @@ def population_analysis():
         call method to do plot pca result
 
         """
-    
+
+        pca_plot_filename = "pca_plot.png"
+        admixture_plot_filename = "adm_plot.png"
+
         if len(SelPop_populations) > 0:
-            helper.plot_pca(data, 'population_code', SelPop_populations)
+            pca_plot_filename = helper.plot_pca(data, 'population_code', SelPop_populations, pca_plot_filename)
         else:
             # Plot based on superpopulations (P2)
-            helper.plot_pca(data, 'superpopulation_code', SelPop_populations) 
+            pca_plot_filename = helper.plot_pca(data, 'superpopulation_code', SelPop_populations, pca_plot_filename) 
         
         """
         call method to plot admixture result
@@ -142,12 +145,12 @@ def population_analysis():
         """
 
         if len(SelPop_populations) > 0:
-            helper.plot_adm(data1, 'population_code', SelPop_populations)
+            admixture_plot_filename = helper.plot_adm(data1, 'population_code', SelPop_populations, admixture_plot_filename) 
         else:
             # Plot based on superpopulations (P2)
-            helper.plot_adm(data1, 'superpopulation_code', SelPop_populations) 
+            admixture_plot_filename = helper.plot_adm(data1, 'superpopulation_code', SelPop_populations, admixture_plot_filename) 
 
-        return redirect(url_for('results'))
+        return render_template('results.html', pca_image=pca_plot_filename, adm_image = admixture_plot_filename)
     return render_template('population_analysis.html', form=form)
 
 # Route for handling SNP analysis form
