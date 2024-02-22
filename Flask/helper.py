@@ -1,4 +1,5 @@
 
+import os
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -30,9 +31,9 @@ def get_population_data(SelPop_populations, SelPop_superpopulations, connection)
     data = pd.read_sql_query((pop_query%{'val':values}), connection)
     return data
 
-def plot_pca(data, column_name, SelPop_populations):
+def plot_pca(data, column_name, SelPop_populations, filename="pca_plot.png"): # File name for saved plot image
     """
-    This method gets popultion data for admixture analysis.
+    This method plots a scatter plot for pca results. 
     """
     unique_values=[]
     data_subset=[]
@@ -70,10 +71,15 @@ def plot_pca(data, column_name, SelPop_populations):
     plt.legend(title=column_name.capitalize(), loc='best')
 
     # Display the plot
-    plt.show() 
-    return
+    plt.savefig(os.path.join('static','images', filename))
+    plt.close()
+    return filename
 
 def get_pop_data(SelPop_populations, SelPop_superpopulations, connection):
+    """
+    This method gets popultion data for admixture analysis.
+    
+    """
     value1 = ''
     adm_query= ''
     if len(SelPop_populations) > 0:
@@ -97,7 +103,11 @@ def get_pop_data(SelPop_populations, SelPop_superpopulations, connection):
 
     return data1
 
-def plot_adm(data1, column_name, SelPop_populations):
+def plot_adm(data1, column_name, SelPop_populations, filename="adm_plot.png"): # File name for saved adm plot
+    """
+    This method returns the heatmap for admixture analysis.
+    
+    """
     unique_values1=[]
     data_subset1=[]
     # Get unique values (populations or superpopulations) from the specified column
@@ -138,32 +148,86 @@ def plot_adm(data1, column_name, SelPop_populations):
 
     # Show plot
     plt.tight_layout()
-    plt.show()
+    plt.savefig(os.path.join('static', 'images', filename))
+    plt.close()
+    return filename
 
-    return
-
-def get_snpId_data(selected_populations, selected_superpopulations, connection):
+def get_snpId_clinical_data(selected_SNPid, connection):
     """
-    This method gets clinical data, genotypic and allele frequencies for snpID's. 
+    This method gets clinical data for snpID's. 
     """
     value2 = ''
-    snpclinical_query= ''
-    if len(selected_populations) > 0:
+    snpclinical_query = ''
+
+    # Check the format of the user input
+    if ":" in selected_SNPid:
+        # If the input contains a colon, assume it's in the "1:1049470:G:A" format
         snpclinical_query = """
-        SELECT s.sample_id, pc.PC1, pc.PC2, s.population_code, s.superpopulation_code 
-        FROM pca as pc
-        JOIN sample_table as s ON pc.s_id = s.sample_id
-        WHERE s.population_code IN (%(val)s); 
+        SELECT v.chrom, v.pos, v.snpid, v.refe, v.alt, v.geneName, sr.hgvscodon, sr.hgvsprotein, sr.phenotype, sr.molconseq, sr.clinsig
+        FROM variant as v
+        JOIN SNP_clinical_relevance as sr 
+        ON sr.chromStart = v.pos AND v.refe = sr.ref_a AND v.alt = sr.alt_a 
+        WHERE sr.phenotype != 'not provided'
+        AND v.snpid = %(val)s; 
         """
-        value2 = ', '.join(["'{}'".format(value) for value in selected_populations])
-    else: 
+        value2 = ', '.join(["'{}'".format(value) for value in selected_SNPid])
+
+    elif ";" in selected_SNPid:
+        # If the input contains a semicolon, assume it's in the "rs2274976;1:11790870:C:T" format
         snpclinical_query = """
-        SELECT s.sample_id, pc.PC1, pc.PC2, s.population_code, s.superpopulation_code 
-        FROM pca as pc
-        JOIN sample_table as s ON pc.s_id = s.sample_id
-        WHERE s.superpopulation_code IN (%(val)s);
+        SELECT v.chrom, v.pos, v.snpid, v.refe, v.alt, v.geneName, sr.hgvscodon, sr.hgvsprotein, sr.phenotype, sr.molconseq, sr.clinsig
+        FROM variant as v
+        JOIN SNP_clinical_relevance as sr 
+        ON sr.chromStart = v.pos AND v.refe = sr.ref_a AND v.alt = sr.alt_a 
+        WHERE sr.phenotype != 'not provided'
+        AND (v.snpid = %(val)s OR v.snpid LIKE %(val_like)s); 
         """
-        value2 = ', '.join(["'{}'".format(value) for value in selected_superpopulations])
+        value2 = selected_SNPid.split(";")[0]
+
+    elif selected_SNPid.startswith("rs"):
+        # If the input starts with "rs", assume it's in the "rs2274976" format
+        snpclinical_query = """
+        SELECT v.chrom, v.pos, v.snpid, v.refe, v.alt, v.geneName, sr.hgvscodon, sr.hgvsprotein, sr.phenotype, sr.molconseq, sr.clinsig
+        FROM variant as v
+        JOIN SNP_clinical_relevance as sr 
+        ON sr.chromStart = v.pos AND v.refe = sr.ref_a AND v.alt = sr.alt_a 
+        WHERE sr.phenotype != 'not provided'
+        AND v.snpid = %(val)s; 
+        """
+        value2 = selected_SNPid
+
+    else:
+        # Handle other cases if needed
+        print("")
+
+    data2 = pd.read_sql_query((snpclinical_query%{'val':value2}), connection)
+
+    return data2
+
+def get_snpId_alellefrq_data(selected_SNPid, selected_populations, connection):
+
+    value3 = ''
+    snpallele_query= ''
+    if ":" in selected_SNPid and len(selected_populations) > 0:
+        snpallele_query = """
+        SELECT v.chrom, v.pos, v.snpid, v.refe, v.alt, v.geneName, sr.hgvscodon, sr.hgvsprotein, sr.phenotype, sr.molconseq, sr.clinsig
+        FROM variant as v
+        JOIN SNP_clinical_relevance as sr 
+        ON sr.chromStart = v.pos AND v.refe = sr.ref_a AND v.alt = sr.alt_a 
+        WHERE sr.phenotype != 'not provided'
+        WHERE v.snpid IN (%(val)s); 
+        """
+        
+    elif:
+        snpclinical_query = """
+        SELECT v.chrom, v.pos, v.snpid, v.refe, v.alt, v.geneName, sr.hgvscodon, sr.hgvsprotein, sr.phenotype, sr.molconseq, sr.clinsig
+        FROM variant as v
+        JOIN SNP_clinical_relevance as sr 
+        ON sr.chromStart = v.pos AND v.refe = sr.ref_a AND v.alt = sr.alt_a 
+        WHERE sr.phenotype = 'not provided'
+        WHERE v.snpid IN (%(val)s); 
+        """
+        value2 = ', '.join(["'{}'".format(value) for value in selected_SNPid])
 
     data3 = pd.read_sql_query((snpclinical_query%{'val':value2}), connection)
     return data3
