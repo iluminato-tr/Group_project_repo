@@ -71,7 +71,9 @@ def plot_pca(data, column_name, SelPop_populations, filename="pca_plot.png"): # 
     plt.legend(title=column_name.capitalize(), loc='best')
 
     # Display the plot
-    plt.savefig(os.path.join('static','images', filename))
+
+    pca_path = '/Users/karch/Desktop/QMUL/git/Group_project_repo/Flask/static/images/'
+    plt.savefig(pca_path+filename)
     plt.close()
     return filename
 
@@ -131,8 +133,6 @@ def plot_adm(data1, column_name, SelPop_populations, filename="adm_plot.png"): #
 
     heatmap_data = np.array([proportions[val] for val in unique_values1])
 
-    print(heatmap_data)
-
     # Plot heatmap
     plt.figure(figsize=(10, 8))
     plt.imshow(heatmap_data, cmap='plasma', aspect='auto')
@@ -148,7 +148,8 @@ def plot_adm(data1, column_name, SelPop_populations, filename="adm_plot.png"): #
 
     # Show plot
     plt.tight_layout()
-    plt.savefig(os.path.join('static', 'images', filename))
+    adm_path= '/Users/karch/Desktop/QMUL/git/Group_project_repo/Flask/static/images/'
+    plt.savefig(adm_path+filename)
     plt.close()
     return filename
 
@@ -210,16 +211,11 @@ def get_snpId_alellefrq_data(selected_SNPid, selected_populations, connection):
     snpallele_query= ''
     if ":" in selected_SNPid and len(selected_populations) > 0:
         snpallele_query = """
-        SELECT v.chrom, v.pos, v.snpid, v.refe, v.alt, v.geneName, sr.hgvscodon, sr.hgvsprotein, sr.phenotype, sr.molconseq, sr.clinsig
-        FROM variant as v
-        JOIN SNP_clinical_relevance as sr 
-        ON sr.chromStart = v.pos AND v.refe = sr.ref_a AND v.alt = sr.alt_a 
-        WHERE sr.phenotype != 'not provided'
-        WHERE v.snpid IN (%(val)s); 
-        """
-        
-    elif:
-        snpclinical_query = """
+        SELECT * FROM pop_allele_frq 
+        WHERE snp_id = %(snp_id)s AND population IN %(populations)s; 
+        """  
+    else:
+        snpallele_query = """
         SELECT v.chrom, v.pos, v.snpid, v.refe, v.alt, v.geneName, sr.hgvscodon, sr.hgvsprotein, sr.phenotype, sr.molconseq, sr.clinsig
         FROM variant as v
         JOIN SNP_clinical_relevance as sr 
