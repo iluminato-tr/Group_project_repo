@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, session
 from flask_wtf import FlaskForm
 from wtforms import SelectMultipleField, SubmitField, StringField, TextAreaField, RadioField
 from wtforms.validators import Optional, DataRequired
@@ -149,8 +149,10 @@ def population_analysis():
         else:
             # Plot based on superpopulations (P2)
             admixture_plot_filename = helper.plot_adm(data1, 'superpopulation_code', SelPop_populations, admixture_plot_filename) 
-
-        return render_template('results.html', pca_image=pca_plot_filename, adm_image = admixture_plot_filename)
+        session['pca_image'] = pca_plot_filename
+        session['adm_image'] = admixture_plot_filename
+        return redirect(url_for('results'))
+        # return render_template('results.html', pca_image=pca_plot_filename, adm_image = admixture_plot_filename)
     return render_template('population_analysis.html', form=form)
 
 # Route for handling SNP analysis form
@@ -169,15 +171,18 @@ def analysis():
 
     return render_template('analysis.html', form=form)
 
-# Route for the home page
 @app.route('/')
 def home():
     return render_template('home.html')
 
-# Route for results page
+# Route for the home page
 @app.route('/results')
 def results():
-    return render_template('results.html')
+    # Retrieve filenames from session if they exist; else, use None
+    pca_image = session.get('pca_image', None)
+    adm_image = session.get('adm_image', None)
+    return render_template('results.html', pca_image=pca_image, adm_image=adm_image)
+
 
 if __name__ == '__main__':
     app.run(debug=True)
