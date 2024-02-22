@@ -3,8 +3,8 @@ def setup():
     host = "localhost"
     port = "5432"    
     user = "postgres"
-    password = "Poojita15$"
-    database = "populationgenetics"  
+    password = "K@r@m14"
+    database = "postgres"  
     try:
         # Establish a connection
         connection = psycopg2.connect(
@@ -28,3 +28,5 @@ def close(cursor, connection):
     print("Connection closed.")
 
     return
+
+# TEST
