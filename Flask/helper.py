@@ -1,7 +1,7 @@
-
-import os
 import pandas as pd
 import numpy as np
+import matplotlib
+matplotlib.use('Agg') # Set the backend to 'Agg' before importing pyplot
 import matplotlib.pyplot as plt
 
 
@@ -72,7 +72,7 @@ def plot_pca(data, column_name, SelPop_populations, filename="pca_plot.png"): # 
 
     # Display the plot
 
-    pca_path = '/Users/karch/Desktop/QMUL/git/Group_project_repo/Flask/static/images/'
+    pca_path = 'S:/Documents/UNIVERSITY/POSTGRADUATE/SLACKWARE/Flask/static/images/' # CHANGE PATH TO YOUR PATH
     plt.savefig(pca_path+filename)
     plt.close()
     return filename
@@ -148,7 +148,7 @@ def plot_adm(data1, column_name, SelPop_populations, filename="adm_plot.png"): #
 
     # Show plot
     plt.tight_layout()
-    adm_path= '/Users/karch/Desktop/QMUL/git/Group_project_repo/Flask/static/images/'
+    adm_path= 'S:/Documents/UNIVERSITY/POSTGRADUATE/SLACKWARE/Flask/static/images/' # CHANGE PATH TO YOUR PATH
     plt.savefig(adm_path+filename)
     plt.close()
     return filename
@@ -161,69 +161,43 @@ def get_snpId_clinical_data(selected_SNPid, connection):
     snpclinical_query = ''
 
     # Check the format of the user input
-    if ":" in selected_SNPid:
-        # If the input contains a colon, assume it's in the "1:1049470:G:A" format
+    if ":" in selected_SNPid or ";" in selected_SNPid or selected_SNPid.startswith("rs"):
+        """
+        If the input contains a colon, assume it's in the "1:1049470:G:A" format, If the input contains a 
+        #semicolon, assume it's in the "rs2274976;1:11790870:C:T" format, If the input starts with "rs", assume it's in the "rs2274976" format
+        
+        """ 
         snpclinical_query = """
-        SELECT v.chrom, v.pos, v.snpid, v.refe, v.alt, v.geneName, sr.hgvscodon, sr.hgvsprotein, sr.phenotype, sr.molconseq, sr.clinsig
+        SELECT v.pos, v.snpid, v.refe, v.alt, v.geneName, sr.hgvscodon, sr.hgvsprotein, sr.phenotype, sr.molecular_consequence, sr.variant_significance, sr.NM_ID, sr.cytogenic_region
         FROM variant as v
         JOIN SNP_clinical_relevance as sr 
         ON sr.chromStart = v.pos AND v.refe = sr.ref_a AND v.alt = sr.alt_a 
         WHERE sr.phenotype != 'not provided'
         AND v.snpid = %(val)s; 
         """
-        value2 = ', '.join(["'{}'".format(value) for value in selected_SNPid])
+        value2 = {'val':selected_SNPid}
 
-    elif ";" in selected_SNPid:
-        # If the input contains a semicolon, assume it's in the "rs2274976;1:11790870:C:T" format
+    elif ":" in selected_SNPid or ";" in selected_SNPid or selected_SNPid.startswith("rs"):
+        """
+        If the input contains a colon, assume it's in the "1:1049470:G:A" format, If the input contains a 
+        #semicolon, assume it's in the "rs2274976;1:11790870:C:T" format, If the input starts with "rs", assume it's in the "rs2274976" format
+        
+        """ 
         snpclinical_query = """
-        SELECT v.chrom, v.pos, v.snpid, v.refe, v.alt, v.geneName, sr.hgvscodon, sr.hgvsprotein, sr.phenotype, sr.molconseq, sr.clinsig
+        SELECT v.pos, v.snpid, v.refe, v.alt, v.geneName, sr.hgvscodon, sr.hgvsprotein, sr.phenotype, sr.molecular_consequence, sr.variant_significance, sr.NM_ID, sr.cytogenic_region
         FROM variant as v
         JOIN SNP_clinical_relevance as sr 
         ON sr.chromStart = v.pos AND v.refe = sr.ref_a AND v.alt = sr.alt_a 
         WHERE sr.phenotype != 'not provided'
-        AND (v.snpid = %(val)s OR v.snpid LIKE %(val_like)s); 
+        AND v.snpid = %(val)s;  
         """
-        value2 = selected_SNPid.split(";")[0]
-
-    elif selected_SNPid.startswith("rs"):
-        # If the input starts with "rs", assume it's in the "rs2274976" format
-        snpclinical_query = """
-        SELECT v.chrom, v.pos, v.snpid, v.refe, v.alt, v.geneName, sr.hgvscodon, sr.hgvsprotein, sr.phenotype, sr.molconseq, sr.clinsig
-        FROM variant as v
-        JOIN SNP_clinical_relevance as sr 
-        ON sr.chromStart = v.pos AND v.refe = sr.ref_a AND v.alt = sr.alt_a 
-        WHERE sr.phenotype != 'not provided'
-        AND v.snpid = %(val)s; 
-        """
-        value2 = selected_SNPid
+        value2 = {'val': selected_SNPid}
 
     else:
         # Handle other cases if needed
-        print("")
+        print("Clinical relevance not provided")
 
-    data2 = pd.read_sql_query((snpclinical_query%{'val':value2}), connection)
+    data2 = pd.read_sql_query(snpclinical_query, connection, params=value2)
 
     return data2
 
-def get_snpId_alellefrq_data(selected_SNPid, selected_populations, connection):
-
-    value3 = ''
-    snpallele_query= ''
-    if ":" in selected_SNPid and len(selected_populations) > 0:
-        snpallele_query = """
-        SELECT * FROM pop_allele_frq 
-        WHERE snp_id = %(snp_id)s AND population IN %(populations)s; 
-        """  
-    else:
-        snpallele_query = """
-        SELECT v.chrom, v.pos, v.snpid, v.refe, v.alt, v.geneName, sr.hgvscodon, sr.hgvsprotein, sr.phenotype, sr.molconseq, sr.clinsig
-        FROM variant as v
-        JOIN SNP_clinical_relevance as sr 
-        ON sr.chromStart = v.pos AND v.refe = sr.ref_a AND v.alt = sr.alt_a 
-        WHERE sr.phenotype = 'not provided'
-        WHERE v.snpid IN (%(val)s); 
-        """
-        value2 = ', '.join(["'{}'".format(value) for value in selected_SNPid])
-
-    data3 = pd.read_sql_query((snpclinical_query%{'val':value2}), connection)
-    return data3
