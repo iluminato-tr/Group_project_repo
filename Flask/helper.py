@@ -201,3 +201,25 @@ def get_snpId_clinical_data(selected_SNPid, connection):
 
     return data2
 
+def get_snpId_alellefrq_data(selected_SNPid, selected_populations, connection):
+
+    value3 = ''
+    snpallele_query= ''
+    if ":" in selected_SNPid and len(selected_populations) > 0:
+        snpallele_query = """
+        SELECT * FROM pop_allele_frq 
+        WHERE snp_id = %(snp_id)s AND population IN %(populations)s; 
+        """  
+    else:
+        snpallele_query = """
+        SELECT v.chrom, v.pos, v.snpid, v.refe, v.alt, v.geneName, sr.hgvscodon, sr.hgvsprotein, sr.phenotype, sr.molconseq, sr.clinsig
+        FROM variant as v
+        JOIN SNP_clinical_relevance as sr 
+        ON sr.chromStart = v.pos AND v.refe = sr.ref_a AND v.alt = sr.alt_a 
+        WHERE sr.phenotype = 'not provided'
+        WHERE v.snpid IN (%(val)s); 
+        """
+        value2 = ', '.join(["'{}'".format(value) for value in selected_SNPid])
+
+    data3 = pd.read_sql_query((snpclinical_query%{'val':value2}), connection)
+    return data3
