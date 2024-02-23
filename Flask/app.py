@@ -14,8 +14,6 @@ cursor, connection = setup()
 
 # Define form for SNP analysis queries
 class SNPAnalysisForm(FlaskForm):
-    # Allows selection between population and superpopulation scopes
-    query_scope = RadioField('Query Scope', choices=[('superpopulation', 'Superpopulation'), ('population', 'Population')], validators=[DataRequired()])
 
     # Define choices for populations and superpopulations for the form
     # Each tuple contains a superpopulation and its corresponding populations
@@ -55,19 +53,24 @@ class SNPAnalysisForm(FlaskForm):
     ]
 
     # Fields for selecting superpopulations and populations
-    superpopulations = SelectMultipleField('Select Superpopulations', choices=[(id, name) for group in population_choices for id, name in group[0]], validators=[Optional()])
-    populations = SelectMultipleField('Select Populations', choices=[(id, name) for group in population_choices for id, name in group[1]], validators=[Optional()])
+    populations = SelectMultipleField('Select Populations', choices=[(id, name) for group in population_choices for id, name in group[1]], validators=[DataRequired()])
 
     # Allows selection of query type
     query_type = RadioField('Query Type', choices=[('snp', 'SNP IDs'), ('gene', 'Gene Names'), ('region', 'Genomic Coordinates')], validators=[DataRequired()])
 
     # Fields for entering relevant query types
     snp_ids = TextAreaField('SNP IDs (comma-separated)', validators=[Optional()])
-    genomic_coords = StringField('Genomic Coordinates (Format: chromosome:start-end)', validators=[Optional()])
+    #genomic_coords = StringField('Genomic Coordinates (Format: chromosome:start-end)', validators=[Optional()])
     gene_names = StringField('Gene Names (comma-separated)', validators=[Optional()])
+
+
+    genomic_start = StringField('Genomic Start Position:', validators=[Optional()])
+    genomic_end = StringField('Genomic End Position:', validators=[Optional()])
 
     # Submit button for the form
     submit = SubmitField('Submit Query')
+
+
 
 # Define form for population analysis queries
 class PopulationAnalysisForm(FlaskForm):
@@ -164,12 +167,18 @@ def analysis():
     # Form data processing to be completed, for now it prints input and redirects to results
     
         selected_populations = request.form.getlist('populations')
-        selected_superpopulations = request.form.getlist('superpopulations')
         selected_SNPid = request.form.get('snp_ids')
         selected_gene = request.form.get('gene_names')
         selected_genomic_coordinate= request.form.get('genomic_coords')
-
+        print(selected_populations)
+        print(selected_SNPid)
+        print(selected_gene)
+        print(selected_genomic_coordinate)
+        
+        return redirect(url_for('results'))
     return render_template('analysis.html', form=form)
+
+
 
 @app.route('/')
 def home():
