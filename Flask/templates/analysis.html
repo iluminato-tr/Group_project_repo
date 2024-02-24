@@ -8,30 +8,14 @@
     <form method="POST" action="{{ url_for('analysis') }}">
         {{ form.hidden_tag() }}
 
-        <!-- Section for choosing populations or superpopulations -->
+        <!-- Directly display the population selection without conditional logic -->
         <div class="form-group">
             <label class="main-label">Choose a Population(s):</label>
-            {% for subfield in form.query_scope %}
-                <div class="form-check">
-                    <!-- Radio buttons for selecting scope -->
-                    {{ subfield() }}
-                    <label class="form-check-label" for="{{ subfield.id }}">{{ subfield.label.text }}</label>
-                </div>
-            {% endfor %}
-        </div>
-
-        <!-- Conditionally displayed sections for selecting specific populations or superpopulations -->
-        <div class="form-group" id="superpopulations" style="display:none;">
-            <label for="superpopulations">{{ form.superpopulations.label }}</label>
-            {{ form.superpopulations(class="form-control") }}
-            <small class="form-text text-muted">Hold Ctrl (or Command on Mac) / Click and drag to select multiple superpopulations.</small>
-        </div>
-
-        <div class="form-group" id="populations" style="display:none;">
-            <label for="populations">{{ form.populations.label }}</label>
             {{ form.populations(class="form-control") }}
             <small class="form-text text-muted">Hold Ctrl (or Command on Mac) / Click and drag to select multiple populations.</small>
         </div>
+        
+        
 
 
         <!-- Selection for choosing the type of SNP analysis query -->
@@ -54,8 +38,10 @@
 
         <!-- Genomic Coordinates field -->
         <div id="genomic_coords" class="form-group" style="display:none;">
-            {{ form.genomic_coords.label }}
-            {{ form.genomic_coords(class="form-control") }}
+            {{ form.genomic_start.label }}
+            {{ form.genomic_start(class="form-control") }}
+            {{ form.genomic_end.label }}
+            {{ form.genomic_end(class="form-control") }}
         </div>
 
         <!-- Gene Names field -->
@@ -71,77 +57,53 @@
         </div>
     </form>
 
-    <!-- JavaScript to handle dynamic display and reset of form elements based on user selections -->
+    <!-- JavaScript to handle dynamic display and input reset based on query type selections -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Funcgtion to clear selections in select elements
-            function resetSelectElement(selectElement) {
-                selectElement.value = ''; // Clear single selection
-                for (const option of selectElement.options) { 
-                    option.selected = false; // Cleat multiple selections
-                }
+            // Function to clear input fields
+            function clearInputFields() {
+                document.getElementById('snp_ids').querySelector('textarea').value = '';
+                document.getElementById('genomic_start').value = '';
+                document.getElementById('genomic_end').value = '';
+                document.getElementById('gene_names').querySelector('input').value = '';
             }
-        
-            // Updates the display of population or superpopulation selection based on the query scope
-            function updateQueryScopeDisplay() {
-                const queryScopeValue = document.querySelector('input[name="query_scope"]:checked')?.value;
-                const superpopulationsSelect = document.getElementById('superpopulations').querySelector('select');
-                const populationsSelect = document.getElementById('populations').querySelector('select');
-                
-                // Show superpopulation selection and hide population selection if superpopulation is chosen, and vice versa
-                if (queryScopeValue === 'superpopulation') {
-                    document.getElementById('superpopulations').style.display = 'block';
-                    document.getElementById('populations').style.display = 'none';
-
-                    resetSelectElement(populationsSelect);
-                } else if (queryScopeValue === 'population') {
-                    document.getElementById('populations').style.display = 'block';
-                    document.getElementById('superpopulations').style.display = 'none';
-
-                    resetSelectElement(superpopulationsSelect);
-                }
-            }
-        
-            // Updates the display of SNP ID, genomic coordinates or gene names input baed on type selected
+    
+            // Function to update the display of SNP ID, genomic coordinates, or gene names input based on type selected
             function updateQueryTypeDisplay() {
                 const queryTypeValue = document.querySelector('input[name="query_type"]:checked')?.value;
-                const snpIdsInput = document.getElementById('snp_ids').querySelector('textarea, input');
-                const genomicCoordsInput = document.getElementById('genomic_coords').querySelector('input');
-                const geneNamesInput = document.getElementById('gene_names').querySelector('input');
+                const snpIdsInputContainer = document.getElementById('snp_ids');
+                const genomicCoordsContainer = document.getElementById('genomic_coords');
+                const geneNamesInputContainer = document.getElementById('gene_names');
+    
+                // Clear input fields when changing query types
+                clearInputFields();
+    
+                // Initially hide all input containers
+                snpIdsInputContainer.style.display = 'none';
+                genomicCoordsContainer.style.display = 'none';
+                geneNamesInputContainer.style.display = 'none';
+    
                 // Show relevant input field based on selected query type
-                document.getElementById('snp_ids').style.display = queryTypeValue === 'snp' ? 'block' : 'none';
-                document.getElementById('genomic_coords').style.display = queryTypeValue === 'region' ? 'block' : 'none';
-                document.getElementById('gene_names').style.display = queryTypeValue === 'gene' ? 'block' : 'none';
-        
-                // Reset inputs when changing query type
-                if (queryTypeValue !== 'snp') {
-                    snpIdsInput.value = '';
-                }
-                if (queryTypeValue !== 'region') {
-                    genomicCoordsInput.value = '';
-                }
-                if (queryTypeValue !== 'gene') {
-                    geneNamesInput.value = '';
+                if (queryTypeValue === 'snp') {
+                    snpIdsInputContainer.style.display = 'block';
+                } else if (queryTypeValue === 'region') {
+                    genomicCoordsContainer.style.display = 'block';
+                } else if (queryTypeValue === 'gene') {
+                    geneNamesInputContainer.style.display = 'block';
                 }
             }
-        
-            // Event listeners for query scope and query type to trigger display updates
-            document.querySelectorAll('input[name="query_scope"]').forEach(radio => {
-                radio.addEventListener('change', function() {
-                    updateQueryScopeDisplay();
-                });
-            });
-        
+
+            
+            // Event listeners for query type to trigger display updates
             document.querySelectorAll('input[name="query_type"]').forEach(radio => {
-                radio.addEventListener('change', function() {
-                    updateQueryTypeDisplay();
-                });
+                radio.addEventListener('change', updateQueryTypeDisplay);
             });
-        
-            // Initial display updates
-            updateQueryScopeDisplay(); 
-            updateQueryTypeDisplay(); 
+    
+            // Initial display update
+            updateQueryTypeDisplay();
         });
-        </script>
-        
+    </script>
+    
+
+
 {% endblock %}
