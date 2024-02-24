@@ -219,6 +219,7 @@ def analysis():
             allele_counts_df = data3[genotype_columns]
             allele_counts = allele_counts_df.values
 
+
             # Compute allele frequencies across populations
             allele_freqs = allele_counts / allele_counts.sum(axis=1)[:, np.newaxis]
 
@@ -231,6 +232,9 @@ def analysis():
             # Calculate expected heterozygosity across populations (Ht)
             Ht = 1 - np.sum(Hs)
 
+            # Get population names
+            pop_names = allele_counts_df.columns[::2]  # Assuming column names alternate between ref and alt counts
+
             # Calculate Fst for each pair of populations
             num_pops = allele_counts.shape[1] // 2
             Fst_matrix = np.zeros((num_pops, num_pops))
@@ -238,8 +242,14 @@ def analysis():
                 for j in range(i + 1, num_pops):
                     Fst_matrix[i, j] = (Ht - (Hs[i] + Hs[j]) / 2) / Ht
 
+            # Set the lower triangular part of the matrix with the same values as the upper triangular part
+            Fst_matrix[np.tril_indices(num_pops)] = Fst_matrix.T[np.tril_indices(num_pops)]
+
+            # Print the Fst matrix with population names
             print("Fst matrix:")
-            print(Fst_matrix)
+            print("\t" + "\t".join(pop_names))
+            for i in range(num_pops):
+                print(pop_names[i] + "\t" + "\t".join(map(str, Fst_matrix[i])))
         else: 
             print('allele frequency not provided')
 
