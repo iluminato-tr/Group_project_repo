@@ -210,4 +210,97 @@ def get_clinical_data(selected_SNPid, selected_gene, selected_genomic_start, sel
     data2 = pd.read_sql_query(snpclinical_query, connection, params=value2)
 
     return data2
+    
+def get_allele_frequency(selected_SNPid, selected_gene, selected_genomic_start, selected_genomic_end, selected_populations, connection):
+    value3 = ''
+    allele_query = ''
+    
+    if len(selected_populations) > 0 and (":" in selected_SNPid or ";" in selected_SNPid or selected_SNPid.startswith("rs")):
+        # Assuming the column names follow the pattern: population_ref, population_alt
+        population_columns = [f"{pop}_ref, {pop}_alt" for pop in selected_populations]
+        selected_columns = ", ".join(population_columns)
+        
+        allele_query = f"""
+        SELECT pos, geneName, snpId, {selected_columns}
+        FROM population_allele_frq
+        WHERE snpId = %(val)s
+        """
+        value3 = {'val': selected_SNPid}
 
+    elif len(selected_populations)>0 and len(selected_gene)>0:
+        # Assuming the column names follow the pattern: population_ref, population_alt
+        population_columns = [f"{pop}_ref, {pop}_alt" for pop in selected_populations]
+        selected_columns = ", ".join(population_columns)
+        
+        allele_query = f"""
+        SELECT pos, snpId, geneName, {selected_columns}
+        FROM population_allele_frq
+        WHERE geneName = %(val)s
+        """
+        value3 = {'val': selected_gene}
+
+    elif len(selected_genomic_start) and len(selected_genomic_end)>0:
+        # Assuming the column names follow the pattern: population_ref, population_alt
+        population_columns = [f"{pop}_ref, {pop}_alt" for pop in selected_populations]
+        selected_columns = ", ".join(population_columns)
+
+        allele_query = f"""
+        SELECT pos, snpId, geneName, {selected_columns}
+        FROM population_allele_frq
+        WHERE pos BETWEEN %(start)s AND %(end)s;
+        """
+        value3 = {'start': selected_genomic_start, 'end': selected_genomic_end}
+
+    else: 
+        print('Allele frequency not provided')
+
+    data3= pd.read_sql_query(allele_query, connection, params=value3)
+
+    return data3
+
+def get_genotype_frequency(selected_SNPid, selected_gene, selected_genomic_start, selected_genomic_end, selected_populations, connection):
+    value4 = ''
+    genotype_query = ''
+    
+    if len(selected_populations) > 0 and (":" in selected_SNPid or ";" in selected_SNPid or selected_SNPid.startswith("rs")):
+        # Assuming the column names follow the pattern: population_ref, population_alt
+        population_columns = [f"{pop}_hom_alt, {pop}_het, {pop}_hom_ref" for pop in selected_populations]
+        selected_columns = ", ".join(population_columns)
+        
+        genotype_query= f"""
+        SELECT pos, geneName, snpId, {selected_columns}
+        FROM pop_gen_frq
+        WHERE snpId = %(val)s
+        """
+        value4 = {'val': selected_SNPid}
+
+    elif len(selected_populations)>0 and len(selected_gene)>0:
+        # Assuming the column names follow the pattern: population_ref, population_alt
+        population_columns = [f"{pop}_hom_alt, {pop}_het, {pop}_hom_ref" for pop in selected_populations]
+        selected_columns = ", ".join(population_columns)
+        
+        genotype_query = f"""
+        SELECT pos, snpId, geneName, {selected_columns}
+        FROM pop_gen_frq
+        WHERE geneName = %(val)s
+        """
+        value4 = {'val': selected_gene}
+
+    elif len(selected_genomic_start) and len(selected_genomic_end)>0:
+        # Assuming the column names follow the pattern: population_ref, population_alt
+        population_columns = [f"{pop}_hom_alt, {pop}_het, {pop}_hom_ref" for pop in selected_populations]
+        selected_columns = ", ".join(population_columns)
+
+        genotype_query = f"""
+        SELECT pos, snpId, geneName, {selected_columns}
+        FROM pop_gen_frq
+        WHERE pos BETWEEN %(start)s AND %(end)s;
+        """
+        value4 = {'start': selected_genomic_start, 'end': selected_genomic_end}
+
+    else: 
+        print('Allele frequency not provided')
+
+    data4= pd.read_sql_query(genotype_query, connection, params=value4)
+
+    return data4
