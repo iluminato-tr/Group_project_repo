@@ -188,7 +188,37 @@ def analysis():
         else:
             print('Clinical releevance not provided')
 
+        """
+        call method to display allele frequencies for gene, snpid and genoic coordinates.
         
+        """
+        data3= helper.get_allele_frequency(selected_SNPid, selected_gene, selected_genomic_start, selected_genomic_end, selected_populations, connection)
+        
+        if ":" in selected_SNPid or ";" in selected_SNPid or selected_SNPid.startswith("rs") and len(selected_populations)>0:
+            print(data3)
+        elif len(selected_gene)>0:
+            print(data3)
+        elif len(selected_genomic_start)>0 and len(selected_genomic_end)>0:
+            print(data3) 
+        else: 
+            print('allele frequency not provided')
+
+        """
+        call method to display allele frequencies for gene, snpid and genoic coordinates.
+        
+        """
+        data4= helper.get_genotype_frequency(selected_SNPid, selected_gene, selected_genomic_start, selected_genomic_end, selected_populations, connection)
+
+        if ":" in selected_SNPid or ";" in selected_SNPid or selected_SNPid.startswith("rs") and len(selected_populations)>0:
+            print(data4)
+        elif len(selected_gene)>0:
+            print(data4)
+        elif len(selected_genomic_start)>0 and len(selected_genomic_end)>0:
+            print(data4) 
+        else: 
+            print('genotype frequency not provided')
+       
+       
         return redirect(url_for('results'))
     return render_template('analysis.html', form=form)
 
