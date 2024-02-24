@@ -1,6 +1,8 @@
 import pandas as pd
 import numpy as np
 import matplotlib
+#import allel
+import seaborn as sns
 matplotlib.use('Agg') # Set the backend to 'Agg' before importing pyplot
 import matplotlib.pyplot as plt
 from scipy.stats import f_oneway
@@ -156,7 +158,8 @@ def plot_adm(data1, column_name, SelPop_populations, filename="adm_plot.png"): #
 
 def get_clinical_data(selected_SNPid, selected_gene, selected_genomic_start, selected_genomic_end, connection):
     """
-    This method gets clinical data for snpID's, gene and genomic coordinates. 
+    Retrieves clinical relevance information for a selected SNP ID, gene name, or genomic coordinates.
+
     """
     value2 = ''
     snpclinical_query = ''
@@ -212,6 +215,10 @@ def get_clinical_data(selected_SNPid, selected_gene, selected_genomic_start, sel
     return data2
     
 def get_allele_frequency(selected_SNPid, selected_gene, selected_genomic_start, selected_genomic_end, selected_populations, connection):
+    """
+    Retrieves allele frequencies for a selected population based on criteria such as SNP ID, gene name, or genomic coordinates.
+
+    """
     value3 = ''
     allele_query = ''
     
@@ -221,7 +228,7 @@ def get_allele_frequency(selected_SNPid, selected_gene, selected_genomic_start, 
         selected_columns = ", ".join(population_columns)
         
         allele_query = f"""
-        SELECT pos, geneName, snpId, {selected_columns}
+        SELECT pos, geneName, snpId, refe, alt, {selected_columns}
         FROM population_allele_frq
         WHERE snpId = %(val)s
         """
@@ -236,19 +243,19 @@ def get_allele_frequency(selected_SNPid, selected_gene, selected_genomic_start, 
         selected_columns = ", ".join(population_columns)
         
         allele_query = f"""
-        SELECT pos, snpId, geneName, {selected_columns}
+        SELECT pos, snpId, geneName, refe, alt, {selected_columns}
         FROM population_allele_frq
         WHERE geneName = %(val)s
         """
         value3 = {'val': selected_gene}
 
-    elif len(selected_genomic_start) and len(selected_genomic_end)>0:
+    elif len(selected_populations)>0 and len(selected_genomic_start) and len(selected_genomic_end)>0:
         # Assuming the column names follow the pattern: population_ref, population_alt
         population_columns = [f"{pop}_ref, {pop}_alt" for pop in selected_populations]
         selected_columns = ", ".join(population_columns)
 
         allele_query = f"""
-        SELECT pos, snpId, geneName, {selected_columns}
+        SELECT pos, snpId, geneName, refe, alt, {selected_columns}
         FROM population_allele_frq
         WHERE pos BETWEEN %(start)s AND %(end)s;
         """
@@ -262,40 +269,44 @@ def get_allele_frequency(selected_SNPid, selected_gene, selected_genomic_start, 
     return data3
 
 def get_genotype_frequency(selected_SNPid, selected_gene, selected_genomic_start, selected_genomic_end, selected_populations, connection):
+    """
+    Retrieves genotypic frequencies for a selected population based on criteria such as SNP ID, gene name, or genomic coordinates.
+ 
+    """
     value4 = ''
     genotype_query = ''
     
     if len(selected_populations) > 0 and (":" in selected_SNPid or ";" in selected_SNPid or selected_SNPid.startswith("rs")):
-        # Assuming the column names follow the pattern: population_ref, population_alt
+        # Assuming the column names follow the pattern: population_hom_ref, population_hom_alt and population_het
         population_columns = [f"{pop}_hom_alt, {pop}_het, {pop}_hom_ref" for pop in selected_populations]
         selected_columns = ", ".join(population_columns)
         
         genotype_query= f"""
-        SELECT pos, geneName, snpId, {selected_columns}
+        SELECT pos, geneName, snpId, refe, alt, {selected_columns}
         FROM pop_gen_frq
         WHERE snpId = %(val)s
         """
         value4 = {'val': selected_SNPid}
 
     elif len(selected_populations)>0 and len(selected_gene)>0:
-        # Assuming the column names follow the pattern: population_ref, population_alt
+        # Assuming the column names follow the pattern: population_hom_ref, population_hom_alt and population_het
         population_columns = [f"{pop}_hom_alt, {pop}_het, {pop}_hom_ref" for pop in selected_populations]
         selected_columns = ", ".join(population_columns)
         
         genotype_query = f"""
-        SELECT pos, snpId, geneName, {selected_columns}
+        SELECT pos, snpId, geneName, refe, alt, {selected_columns}
         FROM pop_gen_frq
         WHERE geneName = %(val)s
         """
         value4 = {'val': selected_gene}
 
     elif len(selected_populations)>0 and len(selected_genomic_start) and len(selected_genomic_end)>0:
-        # Assuming the column names follow the pattern: population_ref, population_alt
+        # Assuming the column names follow the pattern: population_hom_ref, population_hom_alt and population_het
         population_columns = [f"{pop}_hom_alt, {pop}_het, {pop}_hom_ref" for pop in selected_populations]
         selected_columns = ", ".join(population_columns)
 
         genotype_query = f"""
-        SELECT pos, snpId, geneName, {selected_columns}
+        SELECT pos, snpId, geneName, refe, alt, {selected_columns}
         FROM pop_gen_frq
         WHERE pos BETWEEN %(start)s AND %(end)s;
         """
@@ -307,3 +318,93 @@ def get_genotype_frequency(selected_SNPid, selected_gene, selected_genomic_start
     data4= pd.read_sql_query(genotype_query, connection, params=value4)
 
     return data4
+
+def retrieve_allele_count(selected_SNPid, selected_gene, selected_genomic_start, selected_genomic_end, selected_populations, connection):
+    """
+    Retrieves allele counts for a selected population (more than 2) based on criteria such as SNP ID, gene name, or genomic coordinates.
+
+    """
+    value5 =''
+    fst_query=''
+    
+    if len(selected_populations) > 2 and (":" in selected_SNPid or ";" in selected_SNPid or selected_SNPid.startswith("rs")):
+        # Assuming the column names follow the pattern: population_ref, population_alt
+        population_columns_ref = [f"{pop}_ref" for pop in selected_populations]
+        population_columns_alt = [f"{pop}_alt" for pop in selected_populations]
+    
+        # Combine ref and alt columns for each population
+        selected_columns = population_columns_ref + population_columns_alt
+        columns= ", ".join(selected_columns)
+        
+        fst_query= f"""
+        SELECT pos, geneName, snpId, {columns}
+        FROM population_allele_frq
+        WHERE snpId = %(val)s
+        """
+        value5 = {'val': selected_SNPid}
+
+    elif len(selected_populations)>2 and len(selected_gene)>0:
+        # Assuming the column names follow the pattern: population_ref, population_alt
+        population_columns_ref = [f"{pop}_ref" for pop in selected_populations]
+        population_columns_alt = [f"{pop}_alt" for pop in selected_populations]
+    
+        # Combine ref and alt columns for each population
+        selected_columns = population_columns_ref + population_columns_alt
+        columns= ", ".join(selected_columns)
+        
+        
+        fst_query = f"""
+        SELECT pos, snpId, geneName, {columns}
+        FROM population_allele_frq
+        WHERE geneName = %(val)s
+        """
+        value5 = {'val': selected_gene}
+
+    elif len(selected_genomic_start) and len(selected_genomic_end)>0 and len(selected_populations)>2:
+        # Assuming the column names follow the pattern: population_ref, population_alt
+        # Assuming the column names follow the pattern: population_ref, population_alt
+        population_columns_ref = [f"{pop}_ref" for pop in selected_populations]
+        population_columns_alt = [f"{pop}_alt" for pop in selected_populations]
+    
+        # Combine ref and alt columns for each population
+        selected_columns = population_columns_ref + population_columns_alt
+        columns= ", ".join(selected_columns)
+
+        fst_query = f"""
+        SELECT pos, snpId, geneName, {columns}
+        FROM population_allele_frq
+        WHERE pos BETWEEN %(start)s AND %(end)s;
+        """
+        value5 = {'start': selected_genomic_start, 'end': selected_genomic_end}
+
+    else: 
+        print('Allele frequency not provided')
+
+    data5= pd.read_sql_query(fst_query, connection, params=value5)
+
+    allele_counts = data5[selected_columns].values.tolist()
+
+    return allele_counts
+
+
+def compute_pairwise_fst(allele_counts):
+    """
+    Computes pairwise Fixation Index (Fst) values based on allele counts for different populations and returns pairwise FSt values matrix.
+
+    """
+    return allel.stats.pairwise_fst(allele_counts)
+
+def plot_pairwise_fst_heatmap(pairwise_fst):
+    """
+    This function generates a heatmap visualization to illustrate the genetic differentiation 
+    between populations based on the computed pairwise Fst values.
+    
+    """
+    # Plotting the heatmap
+    fig, ax = plt.subplots()
+    sns.heatmap(pairwise_fst, cmap='viridis', annot=True, fmt=".3f", ax=ax)
+    plt.xlabel('Population')
+    plt.ylabel('Population')
+    plt.title('Pairwise Fst Heatmap')
+    plt.tight_layout()
+    plt.show()

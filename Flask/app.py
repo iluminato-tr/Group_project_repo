@@ -175,9 +175,70 @@ def analysis():
         print(selected_gene)
         print(selected_genomic_coordinate)
         
+        
+
+        data2= helper.get_clinical_data(selected_SNPid, selected_gene, selected_genomic_start, selected_genomic_end, connection)
+        
+        if ":" in selected_SNPid or ";" in selected_SNPid or selected_SNPid.startswith("rs"):
+            print(data2)
+        elif len(selected_gene)>0:
+            print(data2)
+        elif len(selected_genomic_start)>0 and len(selected_genomic_end)>0:
+            print(data2)
+        else:
+            print('Clinical releevance not provided')
+
+        """
+        call method to display allele frequencies for gene, snpid and genomic coordinates.
+        
+        """
+        data3= helper.get_allele_frequency(selected_SNPid, selected_gene, selected_genomic_start, selected_genomic_end, selected_populations, connection)
+        
+        if ":" in selected_SNPid or ";" in selected_SNPid or selected_SNPid.startswith("rs") and len(selected_populations)>0:
+            print(data3)
+        elif len(selected_gene)>0 and len(selected_populations)>0:
+            print(data3)
+        elif len(selected_genomic_start)>0 and len(selected_genomic_end)>0 and len(selected_populations)>0:
+            print(data3) 
+        else: 
+            print('allele frequency not provided')
+
+        """
+        call method to display genotypic frequencies for gene, snpid and genomic coordinates.
+        
+        """
+        data4= helper.get_genotype_frequency(selected_SNPid, selected_gene, selected_genomic_start, selected_genomic_end, selected_populations, connection)
+
+        if ":" in selected_SNPid or ";" in selected_SNPid or selected_SNPid.startswith("rs") and len(selected_populations)>0:
+            print(data4)
+        elif len(selected_gene)>0 and len(selected_populations)>0:
+            print(data4)
+        elif len(selected_genomic_start)>0 and len(selected_genomic_end)>0 and len(selected_populations)>0:
+            print(data4) 
+        else: 
+            print('genotype frequency not provided')
+
+        """
+
+        Call method to display pairwise popualtion matrix and visualise it
+        
+        """
+        allele_counts= helper.retrieve_allele_count(selected_SNPid, selected_gene, selected_genomic_start, selected_genomic_end, selected_populations, connection)
+        pairwise_fst = helper.compute_pairwise_fst(allele_counts)
+        plot_pairwise= helper.plot_pairwise_fst_heatmap(pairwise_fst)
+
+        if ":" in selected_SNPid or ";" in selected_SNPid or selected_SNPid.startswith("rs") and len(selected_populations)>2:
+            plot_pairwise 
+        elif len(selected_gene)>0 and len(selected_populations)>2:
+            plot_pairwise
+        elif len(selected_genomic_start)>0 and len(selected_genomic_end)>0 and len(selected_populations)>2:
+            plot_pairwise
+        else: 
+            print('Invalid output')
+
+
         return redirect(url_for('results'))
     return render_template('analysis.html', form=form)
-
 
 
 @app.route('/')
