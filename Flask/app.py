@@ -1,10 +1,11 @@
 from flask import Flask, render_template, request, redirect, url_for, session
 from flask_wtf import FlaskForm
+import numpy as np
 from wtforms import SelectMultipleField, SubmitField, StringField, TextAreaField, RadioField
 from wtforms.validators import Optional, DataRequired
 import helper
 from database import setup, close
-
+import allel
 # Initialise the Flask application & set secret key for CSRF protection
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'sdfgklhjersjio49430-9534-5'
@@ -194,12 +195,51 @@ def analysis():
         """
         data3= helper.get_allele_frequency(selected_SNPid, selected_gene, selected_genomic_start, selected_genomic_end, selected_populations, connection)
         
+
+
         if ":" in selected_SNPid or ";" in selected_SNPid or selected_SNPid.startswith("rs") and len(selected_populations)>0:
             print(data3)
         elif len(selected_gene)>0 and len(selected_populations)>0:
             print(data3)
         elif len(selected_genomic_start)>0 and len(selected_genomic_end)>0 and len(selected_populations)>0:
             print(data3) 
+            ######################
+        elif ":" in selected_SNPid or ";" in selected_SNPid or selected_SNPid.startswith("rs") and len(selected_populations)>1:
+            pop_columns = [col for col in data3.columns if col.endswith('_ref') or col.endswith('_alt')]
+            allele_freqs = data3[pop_columns].values
+            my_allel_matrix = helper.pairwise_fst(allele_freqs)
+            print(my_allel_matrix)
+        elif len(selected_gene)>0 and len(selected_populations)>1:
+            pop_columns = [col for col in data3.columns if col.endswith('_ref') or col.endswith('_alt')]
+            allele_freqs = data3[pop_columns].values
+            my_allel_matrix = helper.pairwise_fst(allele_freqs)
+            print(my_allel_matrix)
+        if (":" in selected_SNPid or ";" in selected_SNPid or selected_SNPid.startswith("rs")) or len(selected_gene)>0 or (len(selected_genomic_start)>0 and len(selected_genomic_end)>0) and len(selected_populations)>1:
+            genotype_columns = [col for col in data3.columns if col.endswith('_ref') or col.endswith('_alt')]
+            allele_counts_df = data3[genotype_columns]
+            allele_counts = allele_counts_df.values
+
+            # Compute allele frequencies across populations
+            allele_freqs = allele_counts / allele_counts.sum(axis=1)[:, np.newaxis]
+
+            # Calculate average allele frequencies across populations
+            avg_allele_freqs = allele_freqs.mean(axis=0)
+
+            # Calculate expected heterozygosity within populations (Hs)
+            Hs = 2 * avg_allele_freqs * (1 - avg_allele_freqs)
+
+            # Calculate expected heterozygosity across populations (Ht)
+            Ht = 1 - np.sum(Hs)
+
+            # Calculate Fst for each pair of populations
+            num_pops = allele_counts.shape[1] // 2
+            Fst_matrix = np.zeros((num_pops, num_pops))
+            for i in range(num_pops):
+                for j in range(i + 1, num_pops):
+                    Fst_matrix[i, j] = (Ht - (Hs[i] + Hs[j]) / 2) / Ht
+
+            print("Fst matrix:")
+            print(Fst_matrix)
         else: 
             print('allele frequency not provided')
 

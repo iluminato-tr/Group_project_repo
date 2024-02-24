@@ -6,7 +6,6 @@ import seaborn as sns
 matplotlib.use('Agg') # Set the backend to 'Agg' before importing pyplot
 import matplotlib.pyplot as plt
 
-
 def get_population_data(SelPop_populations, SelPop_superpopulations, connection):
     """
     This method gets population data for pca analysis. 
