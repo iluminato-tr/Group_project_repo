@@ -169,13 +169,13 @@ def analysis():
         selected_populations = request.form.getlist('populations')
         selected_SNPid = request.form.get('snp_ids')
         selected_gene = request.form.get('gene_names')
-        selected_genomic_coordinate= request.form.get('genomic_coords')
-        print(selected_populations)
-        print(selected_SNPid)
-        print(selected_gene)
-        print(selected_genomic_coordinate)
+        selected_genomic_start= request.form.get('genomic_start')
+        selected_genomic_end=request.form.get('genomic_end')
+
+        """"
+        call method to display clinical relevance for gene, snpid and genomic coordinates.
         
-        
+        """
 
         data2= helper.get_clinical_data(selected_SNPid, selected_gene, selected_genomic_start, selected_genomic_end, connection)
         
@@ -223,19 +223,6 @@ def analysis():
         Call method to display pairwise popualtion matrix and visualise it
         
         """
-        allele_counts= helper.retrieve_allele_count(selected_SNPid, selected_gene, selected_genomic_start, selected_genomic_end, selected_populations, connection)
-        pairwise_fst = helper.compute_pairwise_fst(allele_counts)
-        plot_pairwise= helper.plot_pairwise_fst_heatmap(pairwise_fst)
-
-        if ":" in selected_SNPid or ";" in selected_SNPid or selected_SNPid.startswith("rs") and len(selected_populations)>2:
-            plot_pairwise 
-        elif len(selected_gene)>0 and len(selected_populations)>2:
-            plot_pairwise
-        elif len(selected_genomic_start)>0 and len(selected_genomic_end)>0 and len(selected_populations)>2:
-            plot_pairwise
-        else: 
-            print('Invalid output')
-
 
         return redirect(url_for('results'))
     return render_template('analysis.html', form=form)
