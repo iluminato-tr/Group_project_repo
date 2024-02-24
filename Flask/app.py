@@ -14,8 +14,6 @@ cursor, connection = setup()
 
 # Define form for SNP analysis queries
 class SNPAnalysisForm(FlaskForm):
-    # Allows selection between population and superpopulation scopes
-    query_scope = RadioField('Query Scope', choices=[('superpopulation', 'Superpopulation'), ('population', 'Population')], validators=[DataRequired()])
 
     # Define choices for populations and superpopulations for the form
     # Each tuple contains a superpopulation and its corresponding populations
@@ -55,19 +53,24 @@ class SNPAnalysisForm(FlaskForm):
     ]
 
     # Fields for selecting superpopulations and populations
-    superpopulations = SelectMultipleField('Select Superpopulations', choices=[(id, name) for group in population_choices for id, name in group[0]], validators=[Optional()])
-    populations = SelectMultipleField('Select Populations', choices=[(id, name) for group in population_choices for id, name in group[1]], validators=[Optional()])
+    populations = SelectMultipleField('Select Populations', choices=[(id, name) for group in population_choices for id, name in group[1]], validators=[DataRequired()])
 
     # Allows selection of query type
     query_type = RadioField('Query Type', choices=[('snp', 'SNP IDs'), ('gene', 'Gene Names'), ('region', 'Genomic Coordinates')], validators=[DataRequired()])
 
     # Fields for entering relevant query types
     snp_ids = TextAreaField('SNP IDs (comma-separated)', validators=[Optional()])
-    genomic_coords = StringField('Genomic Coordinates (Format: chromosome:start-end)', validators=[Optional()])
+    #genomic_coords = StringField('Genomic Coordinates (Format: chromosome:start-end)', validators=[Optional()])
     gene_names = StringField('Gene Names (comma-separated)', validators=[Optional()])
+
+
+    genomic_start = StringField('Genomic Start Position:', validators=[Optional()])
+    genomic_end = StringField('Genomic End Position:', validators=[Optional()])
 
     # Submit button for the form
     submit = SubmitField('Submit Query')
+
+
 
 # Define form for population analysis queries
 class PopulationAnalysisForm(FlaskForm):
@@ -166,22 +169,60 @@ def analysis():
         selected_populations = request.form.getlist('populations')
         selected_SNPid = request.form.get('snp_ids')
         selected_gene = request.form.get('gene_names')
-        selected_genomic_coordinate= request.form.get('genomic_coords')
+        selected_genomic_start= request.form.get('genomic_start')
+        selected_genomic_end=request.form.get('genomic_end')
 
-        data2= helper.get_snpId_clinical_data(selected_SNPid, connection)
+        """"
+        call method to display clinical relevance for gene, snpid and genomic coordinates.
         
-
         """
-        call method to display clinical information if user selects SNPid
 
-        """
-        if len(selected_SNPid) > 0:
+        data2= helper.get_clinical_data(selected_SNPid, selected_gene, selected_genomic_start, selected_genomic_end, connection)
+        
+        if ":" in selected_SNPid or ";" in selected_SNPid or selected_SNPid.startswith("rs"):
             print(data2)
+        elif len(selected_gene)>0:
+            print(data2)
+        elif len(selected_genomic_start)>0 and len(selected_genomic_end)>0:
+            print(data2)
+        else:
+            print('Clinical releevance not provided')
+
+        """
+        call method to display allele frequencies for gene, snpid and genoic coordinates.
+        
+        """
+        data3= helper.get_allele_frequency(selected_SNPid, selected_gene, selected_genomic_start, selected_genomic_end, selected_populations, connection)
+        
+        if ":" in selected_SNPid or ";" in selected_SNPid or selected_SNPid.startswith("rs") and len(selected_populations)>0:
+            print(data3)
+        elif len(selected_gene)>0:
+            print(data3)
+        elif len(selected_genomic_start)>0 and len(selected_genomic_end)>0:
+            print(data3) 
         else: 
-            return ('invalid output')
+            print('allele frequency not provided')
+
+        """
+        call method to display allele frequencies for gene, snpid and genoic coordinates.
         
-        
+        """
+        data4= helper.get_genotype_frequency(selected_SNPid, selected_gene, selected_genomic_start, selected_genomic_end, selected_populations, connection)
+
+        if ":" in selected_SNPid or ";" in selected_SNPid or selected_SNPid.startswith("rs") and len(selected_populations)>0:
+            print(data4)
+        elif len(selected_gene)>0:
+            print(data4)
+        elif len(selected_genomic_start)>0 and len(selected_genomic_end)>0:
+            print(data4) 
+        else: 
+            print('genotype frequency not provided')
+       
+       
+        return redirect(url_for('results'))
     return render_template('analysis.html', form=form)
+
+
 
 @app.route('/')
 def home():
