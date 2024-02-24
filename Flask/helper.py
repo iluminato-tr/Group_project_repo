@@ -286,7 +286,7 @@ def get_genotype_frequency(selected_SNPid, selected_gene, selected_genomic_start
         """
         value4 = {'val': selected_gene}
 
-    elif len(selected_genomic_start) and len(selected_genomic_end)>0:
+    elif len(selected_populations)>0 and len(selected_genomic_start) and len(selected_genomic_end)>0:
         # Assuming the column names follow the pattern: population_ref, population_alt
         population_columns = [f"{pop}_hom_alt, {pop}_het, {pop}_hom_ref" for pop in selected_populations]
         selected_columns = ", ".join(population_columns)
