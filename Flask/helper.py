@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib
 matplotlib.use('Agg') # Set the backend to 'Agg' before importing pyplot
 import matplotlib.pyplot as plt
-
+from scipy.stats import f_oneway
 
 def get_population_data(SelPop_populations, SelPop_superpopulations, connection):
     """
@@ -226,6 +226,9 @@ def get_allele_frequency(selected_SNPid, selected_gene, selected_genomic_start, 
         WHERE snpId = %(val)s
         """
         value3 = {'val': selected_SNPid}
+    
+        
+
 
     elif len(selected_populations)>0 and len(selected_gene)>0:
         # Assuming the column names follow the pattern: population_ref, population_alt
@@ -250,7 +253,7 @@ def get_allele_frequency(selected_SNPid, selected_gene, selected_genomic_start, 
         WHERE pos BETWEEN %(start)s AND %(end)s;
         """
         value3 = {'start': selected_genomic_start, 'end': selected_genomic_end}
-
+    
     else: 
         print('Allele frequency not provided')
 
@@ -297,7 +300,7 @@ def get_genotype_frequency(selected_SNPid, selected_gene, selected_genomic_start
         WHERE pos BETWEEN %(start)s AND %(end)s;
         """
         value4 = {'start': selected_genomic_start, 'end': selected_genomic_end}
-
+    
     else: 
         print('Allele frequency not provided')
 
