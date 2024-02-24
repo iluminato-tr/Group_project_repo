@@ -72,7 +72,7 @@ def plot_pca(data, column_name, SelPop_populations, filename="pca_plot.png"): # 
 
     # Display the plot
 
-    pca_path = '/Users/karch/Desktop/QMUL/git/Group_project_repo/Flask/static/images/' # CHANGE PATH TO YOUR PATH
+    pca_path = 'C:/Users/andre/OneDrive/Masaüstü/Group_project_repo/Flask/static/images/' # CHANGE PATH TO YOUR PATH
     plt.savefig(pca_path+filename)
     plt.close()
     return filename
@@ -148,7 +148,7 @@ def plot_adm(data1, column_name, SelPop_populations, filename="adm_plot.png"): #
 
     # Show plot
     plt.tight_layout()
-    adm_path= '/Users/karch/Desktop/QMUL/git/Group_project_repo/Flask/static/images/' # CHANGE PATH TO YOUR PATH
+    adm_path= 'C:/Users/andre/OneDrive/Masaüstü/Group_project_repo/Flask/static/images/' # CHANGE PATH TO YOUR PATH
     plt.savefig(adm_path+filename)
     plt.close()
     return filename

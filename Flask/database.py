@@ -3,7 +3,7 @@ def setup():
     host = "localhost"
     port = "5432"    
     user = "postgres"
-    password = "K@r@m14"
+    password = "Astar79?!"
     database = "postgres"  
     try:
         # Establish a connection
