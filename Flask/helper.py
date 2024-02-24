@@ -72,7 +72,7 @@ def plot_pca(data, column_name, SelPop_populations, filename="pca_plot.png"): # 
 
     # Display the plot
 
-    pca_path = 'S:/Documents/UNIVERSITY/POSTGRADUATE/SLACKWARE/Flask/static/images/' # CHANGE PATH TO YOUR PATH
+    pca_path = '/Users/karch/Desktop/QMUL/git/Group_project_repo/Flask/static/images/' # CHANGE PATH TO YOUR PATH
     plt.savefig(pca_path+filename)
     plt.close()
     return filename
@@ -148,20 +148,21 @@ def plot_adm(data1, column_name, SelPop_populations, filename="adm_plot.png"): #
 
     # Show plot
     plt.tight_layout()
-    adm_path= 'S:/Documents/UNIVERSITY/POSTGRADUATE/SLACKWARE/Flask/static/images/' # CHANGE PATH TO YOUR PATH
+    adm_path= '/Users/karch/Desktop/QMUL/git/Group_project_repo/Flask/static/images/' # CHANGE PATH TO YOUR PATH
     plt.savefig(adm_path+filename)
     plt.close()
     return filename
 
-def get_snpId_clinical_data(selected_SNPid, connection):
+
+def get_clinical_data(selected_SNPid, selected_gene, selected_genomic_start, selected_genomic_end, connection):
     """
-    This method gets clinical data for snpID's. 
+    This method gets clinical data for snpID's, gene and genomic coordinates. 
     """
     value2 = ''
     snpclinical_query = ''
 
     # Check the format of the user input
-    if ":" in selected_SNPid or ";" in selected_SNPid or selected_SNPid.startswith("rs"):
+    if ":" in selected_SNPid or ";" in selected_SNPid or selected_SNPid.startswith("rs") :
         """
         If the input contains a colon, assume it's in the "1:1049470:G:A" format, If the input contains a 
         #semicolon, assume it's in the "rs2274976;1:11790870:C:T" format, If the input starts with "rs", assume it's in the "rs2274976" format
@@ -177,25 +178,34 @@ def get_snpId_clinical_data(selected_SNPid, connection):
         """
         value2 = {'val':selected_SNPid}
 
-    elif ":" in selected_SNPid or ";" in selected_SNPid or selected_SNPid.startswith("rs"):
-        """
-        If the input contains a colon, assume it's in the "1:1049470:G:A" format, If the input contains a 
-        #semicolon, assume it's in the "rs2274976;1:11790870:C:T" format, If the input starts with "rs", assume it's in the "rs2274976" format
+    elif len(selected_gene)>0:
         
-        """ 
         snpclinical_query = """
         SELECT v.pos, v.snpid, v.refe, v.alt, v.geneName, sr.hgvscodon, sr.hgvsprotein, sr.phenotype, sr.molecular_consequence, sr.variant_significance, sr.NM_ID, sr.cytogenic_region
         FROM variant as v
         JOIN SNP_clinical_relevance as sr 
         ON sr.chromStart = v.pos AND v.refe = sr.ref_a AND v.alt = sr.alt_a 
         WHERE sr.phenotype != 'not provided'
-        AND v.snpid = %(val)s;  
+        AND sr.geneName = %(val)s; 
         """
-        value2 = {'val': selected_SNPid}
+        value2 = {'val': selected_gene}
 
+    elif len(selected_genomic_start) and len(selected_genomic_end)>0:
+
+        snpclinical_query= """
+        SELECT v.pos, v.snpid, v.refe, v.alt, v.geneName, sr.hgvscodon, sr.hgvsprotein, sr.phenotype, sr.molecular_consequence, sr.variant_significance, sr.NM_ID, sr.cytogenic_region
+        FROM variant as v
+        JOIN SNP_clinical_relevance as sr 
+        ON sr.chromStart = v.pos AND v.refe = sr.ref_a AND v.alt = sr.alt_a 
+        WHERE sr.phenotype != 'not provided'
+        AND v.pos BETWEEN %(start)s AND %(end)s;
+        """
+        value2 = {'start': selected_genomic_start, 'end': selected_genomic_end}
     else:
         # Handle other cases if needed
         print("Clinical relevance not provided")
+
+    print(snpclinical_query)
 
     data2 = pd.read_sql_query(snpclinical_query, connection, params=value2)
 
