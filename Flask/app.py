@@ -169,56 +169,12 @@ def analysis():
         selected_populations = request.form.getlist('populations')
         selected_SNPid = request.form.get('snp_ids')
         selected_gene = request.form.get('gene_names')
-        selected_genomic_start= request.form.get('genomic_start')
-        selected_genomic_end=request.form.get('genomic_end')
-
-        """"
-        call method to display clinical relevance for gene, snpid and genomic coordinates.
+        selected_genomic_coordinate= request.form.get('genomic_coords')
+        print(selected_populations)
+        print(selected_SNPid)
+        print(selected_gene)
+        print(selected_genomic_coordinate)
         
-        """
-
-        data2= helper.get_clinical_data(selected_SNPid, selected_gene, selected_genomic_start, selected_genomic_end, connection)
-        
-        if ":" in selected_SNPid or ";" in selected_SNPid or selected_SNPid.startswith("rs"):
-            print(data2)
-        elif len(selected_gene)>0:
-            print(data2)
-        elif len(selected_genomic_start)>0 and len(selected_genomic_end)>0:
-            print(data2)
-        else:
-            print('Clinical releevance not provided')
-
-        """
-        call method to display allele frequencies for gene, snpid and genoic coordinates.
-        
-        """
-        data3= helper.get_allele_frequency(selected_SNPid, selected_gene, selected_genomic_start, selected_genomic_end, selected_populations, connection)
-        
-        if ":" in selected_SNPid or ";" in selected_SNPid or selected_SNPid.startswith("rs") and len(selected_populations)>0:
-            print(data3)
-        elif len(selected_gene)>0:
-            print(data3)
-        elif len(selected_genomic_start)>0 and len(selected_genomic_end)>0:
-            print(data3) 
-        else: 
-            print('allele frequency not provided')
-
-        """
-        call method to display allele frequencies for gene, snpid and genoic coordinates.
-        
-        """
-        data4= helper.get_genotype_frequency(selected_SNPid, selected_gene, selected_genomic_start, selected_genomic_end, selected_populations, connection)
-
-        if ":" in selected_SNPid or ";" in selected_SNPid or selected_SNPid.startswith("rs") and len(selected_populations)>0:
-            print(data4)
-        elif len(selected_gene)>0:
-            print(data4)
-        elif len(selected_genomic_start)>0 and len(selected_genomic_end)>0:
-            print(data4) 
-        else: 
-            print('genotype frequency not provided')
-       
-       
         return redirect(url_for('results'))
     return render_template('analysis.html', form=form)
 
