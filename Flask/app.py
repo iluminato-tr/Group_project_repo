@@ -245,7 +245,7 @@ def analysis():
             Fst_matrix[np.tril_indices(num_pops)] = Fst_matrix.T[np.tril_indices(num_pops)]
 
             # Print the Fst matrix with population names
-            print("Fst matrix:")
+            print("Fst matrix for allel:")
             print("\t" + "\t".join(pop_names))
             for i in range(num_pops):
                 print(pop_names[i] + "\t" + "\t".join(map(str, Fst_matrix[i])))
@@ -264,6 +264,47 @@ def analysis():
             print(data4)
         elif len(selected_genomic_start)>0 and len(selected_genomic_end)>0 and len(selected_populations)>0:
             print(data4) 
+        if (":" in selected_SNPid or ";" in selected_SNPid or selected_SNPid.startswith("rs")) or len(selected_gene)>0 or (len(selected_genomic_start)>0 and len(selected_genomic_end)>0) and len(selected_populations)>1:
+            genotype_columns = [col for col in data4.columns if col.endswith('_ref') or col.endswith('_alt') or col.endswith('_het')]
+            genotype_freqs_df = data4[genotype_columns]
+            genotype_freqs = genotype_freqs_df.values
+
+            # Calculate total allele counts
+            total_allele_counts = genotype_freqs.sum(axis=1)
+
+            # Separate homozygous and heterozygous allele counts
+            homozygous_allele_counts = genotype_freqs[:, :2].sum(axis=1)
+            heterozygous_allele_counts = genotype_freqs[:, 2]
+
+            # Calculate allele frequencies
+            allele_freqs = homozygous_allele_counts / (2 * total_allele_counts)
+
+            # Calculate expected heterozygosity within populations (Hs)
+            Hs = 2 * allele_freqs * (1 - allele_freqs) * total_allele_counts / (total_allele_counts - 1)
+
+            # Calculate expected heterozygosity across populations (Ht)
+            Ht = 1 - np.sum(Hs / total_allele_counts)
+
+            # Get population names
+            pop_names = [col[:-4] for col in genotype_columns]
+
+            # Calculate Fst for each pair of populations
+            num_pops = len(pop_names)
+            Fst_matrix = np.zeros((num_pops, num_pops))
+            for i in range(num_pops):
+                for j in range(i + 1, num_pops):
+                    Fst_matrix[i, j] = (Ht - (Hs[i] + Hs[j]) / 2) / Ht
+
+            # Set the lower triangular part of the matrix with the same values as the upper triangular part
+            Fst_matrix[np.tril_indices(num_pops)] = Fst_matrix.T[np.tril_indices(num_pops)]
+
+            # Print the Fst matrix with population names
+            print("Fst matrix for genotype:")
+            print("\t" + "\t".join(pop_names))
+            for i in range(num_pops):
+                print(pop_names[i] + "\t" + "\t".join(map(str, Fst_matrix[i])))
+        
+        
         else: 
             print('genotype frequency not provided')
 
