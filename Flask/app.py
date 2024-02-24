@@ -219,7 +219,6 @@ def analysis():
             allele_counts_df = data3[genotype_columns]
             allele_counts = allele_counts_df.values
 
-
             # Compute allele frequencies across populations
             allele_freqs = allele_counts / allele_counts.sum(axis=1)[:, np.newaxis]
 
@@ -233,10 +232,10 @@ def analysis():
             Ht = 1 - np.sum(Hs)
 
             # Get population names
-            pop_names = allele_counts_df.columns[::2]  # Assuming column names alternate between ref and alt counts
+            pop_names = allele_counts_df.columns
 
             # Calculate Fst for each pair of populations
-            num_pops = allele_counts.shape[1] // 2
+            num_pops = allele_counts.shape[1]
             Fst_matrix = np.zeros((num_pops, num_pops))
             for i in range(num_pops):
                 for j in range(i + 1, num_pops):
