@@ -2,19 +2,28 @@ Getting Started
 
 1. Installation
 
-Clone the GitHub repository
+#Clone the GitHub repository
 
 Clone the GitHub repository of the web application to your local machine. This will create a local copy of the project repository on your machine, allowing you to access and modify the application's source code.
 
-Install required dependencies
+#Install required dependencies
 
 Install the required Python dependencies listed in the requirments.txt file using the pip package manager. Navigate to the project directory in your terminal and install all the necessary Python packages and libraries specified in the requirements.txt file, ensuring that the application has all the required dependencies to run smoothly.
 
-Set Up the Database
+#Install the RDBMS 
 
-Set up the database by executing the provided SQL scripts. You can use your preferred database management tool (e.g., MySQL Workbench, pgAdmin) or the terminal to run the SQL scripts.
+Download the SQL installer of your choice (SQLite, MySQL) but we've provided the details for PostgreSQL here: 
 
-Execute the SQL scripts provided in the (SQL) directory to create the necessary database schema, tables, and initial data. You can use the SQL command-line tool or other SQL database management systems to execute the scripts.
+Visit the official PostgreSQL download page at https://www.postgresql.org/download/
+Choose the appropriate installer based on your operating system, run and complete the installation. 
+Once the installation is complete, you might need to initialize the database cluster. This is typically done automatically, but if not, you can find an option for it in the PostgreSQL start menu folder.
+PostgreSQL is installed as a service. You can start and stop it using the Services application or the pgAdmin tool (graphical client for easier databse management).
+You can visit the official pgAdmin download page at https://www.pgadmin.org/download/
+
+#Running SQL queries
+
+You can create a new database or excute the queries in an existin database. 
+Open your database client and connect to the database server. Open the SQL file provided in the proect (tables.sql) usin gthe database client and execue them. Verify the database to ensure the the queries were executed successfulyy and gave the expected results.  
 
 Ensure that the database connection details (e.g., database URL, username, password) are correctly configured in the application's configuration files to establish a connection between the web application and the database.
 
