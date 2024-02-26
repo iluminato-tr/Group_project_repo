@@ -22,12 +22,12 @@ You can visit the official pgAdmin download page at https://www.pgadmin.org/down
 
 #Running SQL queries
 
-You can create a new database or excute the queries in an existin database. 
-Open your database client and connect to the database server. Open the SQL file provided in the proect (tables.sql) usin gthe database client and execue them. Verify the database to ensure the the queries were executed successfulyy and gave the expected results.  
+You can create a new database or excute the queries in an existing database. 
+Open your database client and connect to the database server. Open the SQL file provided in the project (tables.sql) using the database client and execute them. Verify the database to ensure the the queries were executed successfulyy and gave the expected results.  
 
 Ensure that the database connection details (e.g., database URL, username, password) are correctly configured in the application's configuration files to establish a connection between the web application and the database.
 
-Run the application server
+#Run the application server
 
 Run the application server to start the population genetics web application. This will launch the Flask development server, which hosts the web application locally on your machine. You will see the output in the terminal indicating that the server is running.
 
@@ -35,7 +35,7 @@ Run the application server to start the population genetics web application. Thi
 
 Accessing the Web Application
 
-Access the web application through a web browser by entering the provided URL in the address bar. This URL corresponds to the local address where the Flask development server is running (e.g.,……).
+Access the web application through a web browser by entering the provided URL in the address bar. This URL corresponds to the local address where the Flask development server is running (e.g., http://127.0.0.1:5000).
 
 Alternatively, if the application is deployed to a remote server, access it by entering the appropriate URL in the address bar of your web browser.
 
