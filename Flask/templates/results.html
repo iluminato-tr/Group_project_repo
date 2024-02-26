@@ -3,36 +3,142 @@
 {% block title %}Analysis Results{% endblock %}
 
 {% block content %}
-    <h1>Analysis Results</h1>
-    <div class="results-content">
-        <!-- Display PCA Results if available -->
-        {% if pca_image %}
-            <div id="pca-results">
-                <h2>PCA Results</h2>
-                <img src="{{ url_for('static', filename='images/' + pca_image) }}" alt="PCA Results" style="max-width: 100%;">
-            </div>
-            {% elif no_data_message %}
-            <p>{{ no_data_message }}</p>
-        {% endif %}
-
-        <!-- Display ADMIXTURE Results if available -->
-        {% if adm_image %}
-            <div id="admixture-results">
-                <h2>ADMIXTURE Results</h2>
-                <img src="{{ url_for('static', filename='images/' + adm_image) }}" alt="ADMIXTURE Results" style="max-width: 100%;">
-            </div>
-        {% endif %}
-
-        <!-- Placeholder for SNP/Gene/Region Query Results -->
-        <div id="query-results">
-            <h2>Genetic Query Results</h2>
-            <p>Results for specific SNP, gene, or region queries will be shown here.</p>
-        </div>
-
-        <!-- Placeholder for Visual Representation of Genetic Differentiation -->
-        <div id="genetic-diff-visualization">
-            <h2>Genetic Differentiation Visualization</h2>
-            <p>A visual representation of genetic differentiation will be presented here.</p>
-        </div>
+<h1>Analysis Results</h1>
+<div class="results-content">
+    <!-- Display PCA Results if available -->
+    {% if pca_image %}
+    <div id="pca-results">
+        <h2>PCA Results</h2>
+        <img src="{{ url_for('static', filename='images/' + pca_image) }}" alt="PCA Results" style="max-width: 100%;">
     </div>
+    {% endif %}
+
+    <!-- Display ADMIXTURE Results if available -->
+    {% if adm_image %}
+    <div id="admixture-results">
+        <h2>ADMIXTURE Results</h2>
+        <img src="{{ url_for('static', filename='images/' + adm_image) }}" alt="ADMIXTURE Results" style="max-width: 100%;">
+    </div>
+    {% endif %}
+
+    <!-- Clinical Relevance Table -->
+    {% if session.clinical_data %}
+    <div id="clinical-relevance-results">
+        <h2>Clinical Relevance Results</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Position</th>
+                    <th>Gene</th>
+                    <th>SNP ID</th>
+                    <th>Ref allele</th>
+                    <th>ALt allele</th>
+                    <th>HGVS codon</th>
+                    <th>HGVS protein</th>
+                    <th>Phenotype</th>
+                    <th>Molecular consequence</th>
+                    <th>variant significance</th>
+                    <th>NM ID</th>
+                    <th>cytogenic region</th>
+                    <!-- Add other headers as needed -->
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in session.clinical_data %}
+                <tr>
+                    <td>{{ row.pos}}</td>
+                    <td>{{ row.genename }}</td>
+                    <td>{{ row.snpid }}</td>
+                    <td>{{ row.refe}}</td>
+                    <td>{{ row.alt}}</td>
+                    <td>{{ row.refe}}</td>
+                    <td>{{ row.hgvscodon}}</td>
+                    <td>{{ row.hgvsprotein}}</td>
+                    <td>{{ row.phenotype}}</td>
+                    <td>{{ row.molecular_consequence}}</td>
+                    <td>{{ row.variant_significance}}</td>
+                    <td>{{ row.nm_id}}</td>
+                    <td>{{ row.cytogenic_region}}</td>
+                    <!-- Add other data cells as needed -->
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+    <!-- Allele Frequencies Table -->
+    {% if session.allele_frequency_data %}
+    <div id="allele-frequency-results">
+        <h2>Allele Frequency Results</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Position</th>
+                    <th>Gene</th>
+                    <th>SNP ID</th>
+                    <th>Ref allele</th>
+                    <th>ALt allele</th>
+                    <th>Ref allele frequency</th>
+                    <th>alt allele frequency</th>
+                    <!-- Add other headers as needed -->
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in session.allele_frequency_data %}
+                <tr>
+                    <td>{{ row.pos}}</td>
+                    <td>{{ row.genename }}</td>
+                    <td>{{ row.snpid}}</td>
+                    <td>{{ row.refe}}</td>
+                    <td>{{ row.alt}}</td>
+                    <td>{{ row._ref}}</td>
+                    <td>{{ row._alt}}</td>
+                    <!-- Add other data cells as needed -->
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+    <!-- Genotype Frequencies Table -->
+    {% if session.genotype_frequency_data %}
+    <div id="genotype-frequency-results">
+        <h2>Genotype Frequency Results</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>SNP ID</th>
+                    <th>Population</th>
+                    <th>Hom Ref</th>
+                    <th>Hom Alt</th>
+                    <th>Het</th>
+                    <!-- Add other headers as needed -->
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in session.genotype_frequency_data %}
+                <tr>
+                    <td>{{ row.snpId }}</td>
+                    <td>{{ row.population }}</td>
+                    <td>{{ row.hom_ref }}</td>
+                    <td>{{ row.hom_alt }}</td>
+                    <td>{{ row.het }}</td>
+                    <!-- Add other data cells as needed -->
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+    <!-- Visual Representation of Genetic Differentiation if available
+    {% if session.pairwise_fst %}
+    <div id="genetic-diff-visualization">
+        <h2>Genetic Differentiation Visualization</h2>
+        <img src="{{ url_for('static', filename='images/' + session.pairwise_fst) }}" alt="Pairwise FST Results" style="max-width: 100%;">
+    </div>
+    {% endif %} -->
+</div>
 {% endblock %}
