@@ -1,7 +1,6 @@
 import pandas as pd
 import numpy as np
 import matplotlib
-#import allel
 import seaborn as sns
 matplotlib.use('Agg') # Set the backend to 'Agg' before importing pyplot
 import matplotlib.pyplot as plt
@@ -314,94 +313,9 @@ def get_genotype_frequency(selected_SNPid, selected_gene, selected_genomic_start
 
     data4= pd.read_sql_query(genotype_query, connection, params=value4)
 
-    return data4
+    for pop in selected_populations:
+        data4[f'{pop.lower()}_hom_alt_freq'] = (data4[f'{pop.lower()}_hom_alt'] / data4[[f'{pop.lower()}_hom_alt', f'{pop.lower()}_het', f'{pop.lower()}_hom_ref']].sum(axis=1)) * 100
+        data4[f'{pop.lower()}_het_freq'] = (data4[f'{pop.lower()}_het'] / data4[[f'{pop.lower()}_hom_alt', f'{pop.lower()}_het', f'{pop.lower()}_hom_ref']].sum(axis=1)) * 100
+        data4[f'{pop.lower()}_hom_ref_freq'] = (data4[f'{pop.lower()}_hom_ref'] / data4[[f'{pop.lower()}_hom_alt', f'{pop.lower()}_het', f'{pop.lower()}_hom_ref']].sum(axis=1)) * 100
 
-def retrieve_allele_count(selected_SNPid, selected_gene, selected_genomic_start, selected_genomic_end, selected_populations, connection):
-    """
-    Retrieves allele counts for a selected population (more than 2) based on criteria such as SNP ID, gene name, or genomic coordinates.
-
-    """
-    value5 =''
-    fst_query=''
-    
-    if len(selected_populations) > 2 and (":" in selected_SNPid or ";" in selected_SNPid or selected_SNPid.startswith("rs")):
-        # Assuming the column names follow the pattern: population_ref, population_alt
-        population_columns_ref = [f"{pop}_ref" for pop in selected_populations]
-        population_columns_alt = [f"{pop}_alt" for pop in selected_populations]
-    
-        # Combine ref and alt columns for each population
-        selected_columns = population_columns_ref + population_columns_alt
-        columns= ", ".join(selected_columns)
-        
-        fst_query= f"""
-        SELECT pos, geneName, snpId, {columns}
-        FROM population_allele_frq
-        WHERE snpId = %(val)s
-        """
-        value5 = {'val': selected_SNPid}
-
-    elif len(selected_populations)>2 and len(selected_gene)>0:
-        # Assuming the column names follow the pattern: population_ref, population_alt
-        population_columns_ref = [f"{pop}_ref" for pop in selected_populations]
-        population_columns_alt = [f"{pop}_alt" for pop in selected_populations]
-    
-        # Combine ref and alt columns for each population
-        selected_columns = population_columns_ref + population_columns_alt
-        columns= ", ".join(selected_columns)
-        
-        
-        fst_query = f"""
-        SELECT pos, snpId, geneName, {columns}
-        FROM population_allele_frq
-        WHERE geneName = %(val)s
-        """
-        value5 = {'val': selected_gene}
-
-    elif len(selected_genomic_start) and len(selected_genomic_end)>0 and len(selected_populations)>2:
-        # Assuming the column names follow the pattern: population_ref, population_alt
-        # Assuming the column names follow the pattern: population_ref, population_alt
-        population_columns_ref = [f"{pop}_ref" for pop in selected_populations]
-        population_columns_alt = [f"{pop}_alt" for pop in selected_populations]
-    
-        # Combine ref and alt columns for each population
-        selected_columns = population_columns_ref + population_columns_alt
-        columns= ", ".join(selected_columns)
-
-        fst_query = f"""
-        SELECT pos, snpId, geneName, {columns}
-        FROM population_allele_frq
-        WHERE pos BETWEEN %(start)s AND %(end)s;
-        """
-        value5 = {'start': selected_genomic_start, 'end': selected_genomic_end}
-
-    else: 
-        print('Allele frequency not provided')
-
-    data5= pd.read_sql_query(fst_query, connection, params=value5)
-
-    allele_counts = data5[selected_columns].values.tolist()
-
-    return allele_counts
-
-
-def compute_pairwise_fst(allele_counts):
-    """
-    Computes pairwise Fixation Index (Fst) values based on allele counts for different populations and returns pairwise FSt values matrix.
-
-    """
-    return allel.stats.pairwise_fst(allele_counts)
-
-def plot_pairwise_fst_heatmap(pairwise_fst):
-    """
-    This function generates a heatmap visualization to illustrate the genetic differentiation 
-    between populations based on the computed pairwise Fst values.
-    
-    """
-    # Plotting the heatmap
-    fig, ax = plt.subplots()
-    sns.heatmap(pairwise_fst, cmap='viridis', annot=True, fmt=".3f", ax=ax)
-    plt.xlabel('Population')
-    plt.ylabel('Population')
-    plt.title('Pairwise Fst Heatmap')
-    plt.tight_layout()
-    plt.show()
+    return(data4)
