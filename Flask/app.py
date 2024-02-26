@@ -176,66 +176,102 @@ def analysis():
         call method to display clinical relevance for gene, snpid and genomic coordinates.
         
         """
+        # Inside your /analysis route
+        data2 = helper.get_clinical_data(selected_SNPid, selected_gene, selected_genomic_start, selected_genomic_end, connection)
 
-        data2= helper.get_clinical_data(selected_SNPid, selected_gene, selected_genomic_start, selected_genomic_end, connection)
-        
+        # Initializing an empty list for clinical data to handle cases where no data is found or provided
+        session['clinical_data'] = []
+
+        # The if conditions remain the same to check which data to fetch based on the input
         if ":" in selected_SNPid or ";" in selected_SNPid or selected_SNPid.startswith("rs"):
-            print(data2)
-        elif len(selected_gene)>0:
-            print(data2)
-        elif len(selected_genomic_start)>0 and len(selected_genomic_end)>0:
-            print(data2)
+            # If data2 is not empty, convert it to a list of dictionaries and store in session
+            if not data2.empty:
+                print("before ssetting", session.get('clinical_data'))
+                session['clinical_data'] = data2.to_dict('records')
+                print("after setiing", session["clinical_data"])
+            else:
+                print('No clinical data found for the SNP ID')
+        elif len(selected_gene) > 0:
+            if not data2.empty:
+                print("before ssetting", session.get('clinical_data'))
+                session['clinical_data'] = data2.to_dict('records')
+                print("after setiing", session["clinical_data"])
+            else:
+                print('No clinical data found for the gene name')
+        elif len(selected_genomic_start) > 0 and len(selected_genomic_end) > 0:
+            if not data2.empty:
+                print("before ssetting", session.get('clinical_data'))
+                session['clinical_data'] = data2.to_dict('records')
+                print("after setiing", session["clinical_data"])
+            else:
+                print('No clinical data found for the genomic coordinates')
         else:
-            print('Clinical releevance not provided')
+            print('Clinical relevance not provided')
 
         """
         call method to display allele frequencies for gene, snpid and genomic coordinates.
         
         """
-        data3= helper.get_allele_frequency(selected_SNPid, selected_gene, selected_genomic_start, selected_genomic_end, selected_populations, connection)
-        
-        if ":" in selected_SNPid or ";" in selected_SNPid or selected_SNPid.startswith("rs") and len(selected_populations)>0:
-            print(data3)
-        elif len(selected_gene)>0 and len(selected_populations)>0:
-            print(data3)
-        elif len(selected_genomic_start)>0 and len(selected_genomic_end)>0 and len(selected_populations)>0:
-            print(data3) 
-        else: 
-            print('allele frequency not provided')
+        # Inside your /analysis route
+        data3 = helper.get_allele_frequency(selected_SNPid, selected_gene, selected_genomic_start, selected_genomic_end, selected_populations, connection)
+
+        # Initializing an empty list for allele frequency data to handle cases where no data is found or provided
+        session['allele_frequency_data'] = []
+
+        # The if conditions remain the same to check which data to fetch based on the input
+        if ":" in selected_SNPid or ";" in selected_SNPid or selected_SNPid.startswith("rs") and len(selected_populations) > 0:
+            if not data3.empty:
+                session['allele_frequency_data'] = data3.to_dict('records')
+                print(data3)
+            else:
+                print('No allele frequency data found for the SNP ID')
+        elif len(selected_gene) > 0 and len(selected_populations) > 0:
+            if not data3.empty:
+                session['allele_frequency_data'] = data3.to_dict('records')
+                print(data3)
+            else:
+                print('No allele frequency data found for the gene name')
+        elif len(selected_genomic_start) > 0 and len(selected_genomic_end) > 0 and len(selected_populations) > 0:
+            if not data3.empty:
+                session['allele_frequency_data'] = data3.to_dict('records')
+                print(data3)
+            else:
+                print('No allele frequency data found for the genomic coordinates')
+        else:
+            print('Allele frequency not provided')
+
 
         """
         call method to display genotypic frequencies for gene, snpid and genomic coordinates.
         
         """
-        data4= helper.get_genotype_frequency(selected_SNPid, selected_gene, selected_genomic_start, selected_genomic_end, selected_populations, connection)
+        # Inside your /analysis route
+        data4 = helper.get_genotype_frequency(selected_SNPid, selected_gene, selected_genomic_start, selected_genomic_end, selected_populations, connection)
 
-        if ":" in selected_SNPid or ";" in selected_SNPid or selected_SNPid.startswith("rs") and len(selected_populations)>0:
-            print(data4)
-        elif len(selected_gene)>0 and len(selected_populations)>0:
-            print(data4)
-        elif len(selected_genomic_start)>0 and len(selected_genomic_end)>0 and len(selected_populations)>0:
-            print(data4) 
-        else: 
-            print('genotype frequency not provided')
+        # Initializing an empty list for genotype frequency data to handle cases where no data is found or provided
+        session['genotype_frequency_data'] = []
 
-        """
-
-        Call method to display pairwise popualtion matrix and visualise it
-        
-        """
-        allele_counts= helper.retrieve_allele_count(selected_SNPid, selected_gene, selected_genomic_start, selected_genomic_end, selected_populations, connection)
-        pairwise_fst = helper.compute_pairwise_fst(allele_counts)
-        plot_pairwise= helper.plot_pairwise_fst_heatmap(pairwise_fst)
-
-        if ":" in selected_SNPid or ";" in selected_SNPid or selected_SNPid.startswith("rs") and len(selected_populations)>2:
-            plot_pairwise 
-        elif len(selected_gene)>0 and len(selected_populations)>2:
-            plot_pairwise
-        elif len(selected_genomic_start)>0 and len(selected_genomic_end)>0 and len(selected_populations)>2:
-            plot_pairwise
-        else: 
-            print('Invalid output')
-
+        # The if conditions remain the same to check which data to fetch based on the input
+        if ":" in selected_SNPid or ";" in selected_SNPid or selected_SNPid.startswith("rs") and len(selected_populations) > 0:
+            if not data4.empty:
+                session['genotype_frequency_data'] = data4.to_dict('records')
+                print(data4)
+            else:
+                print('No genotype frequency data found for the SNP ID')
+        elif len(selected_gene) > 0 and len(selected_populations) > 0:
+            if not data4.empty:
+                session['genotype_frequency_data'] = data4.to_dict('records')
+                print(data4)
+            else:
+                print('No genotype frequency data found for the gene name')
+        elif len(selected_genomic_start) > 0 and len(selected_genomic_end) > 0 and len(selected_populations) > 0:
+            if not data4.empty:
+                session['genotype_frequency_data'] = data4.to_dict('records')
+                print(data4)
+            else:
+                print('No genotype frequency data found for the genomic coordinates')
+        else:
+            print('Genotype frequency not provided')
 
         return redirect(url_for('results'))
     return render_template('analysis.html', form=form)
@@ -245,18 +281,28 @@ def analysis():
 def home():
     return render_template('home.html')
 
-# Route for the home page
 @app.route('/results')
 def results():
     # Retrieve filenames from session if they exist; else, use None
     pca_image = session.get('pca_image', None)
     adm_image = session.get('adm_image', None)
-    return render_template('results.html', pca_image=pca_image, adm_image=adm_image)
+    
+    # Retrieve data for tables from session
+    clinical_data = session.get('clinical_data', [])
+    allele_frequency_data = session.get('allele_frequency_data', [])
+    genotype_frequency_data = session.get('genotype_frequency_data', [])
 
+    # Pass all the data to the template
+    return render_template(
+        'results.html',
+        pca_image=pca_image,
+        adm_image=adm_image,
+        clinical_data=clinical_data,
+        allele_frequency_data=allele_frequency_data,
+        genotype_frequency_data=genotype_frequency_data,
+    )
 
 if __name__ == '__main__':
     app.run(debug=True)
 
 close(cursor, connection)
-
-    
