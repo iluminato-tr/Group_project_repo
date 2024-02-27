@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, session
 from flask_wtf import FlaskForm
+from matplotlib import pyplot as plt
 import numpy as np
 from wtforms import SelectMultipleField, SubmitField, StringField, TextAreaField, RadioField
 from wtforms.validators import Optional, DataRequired
@@ -203,55 +204,37 @@ def analysis():
             print(data3)
         elif len(selected_genomic_start)>0 and len(selected_genomic_end)>0 and len(selected_populations)>0:
             print(data3) 
-            ######################
-        elif ":" in selected_SNPid or ";" in selected_SNPid or selected_SNPid.startswith("rs") and len(selected_populations)>1:
-            pop_columns = [col for col in data3.columns if col.endswith('_ref') or col.endswith('_alt')]
-            allele_freqs = data3[pop_columns].values
-            my_allel_matrix = helper.pairwise_fst(allele_freqs)
-            print(my_allel_matrix)
-        elif len(selected_gene)>0 and len(selected_populations)>1:
-            pop_columns = [col for col in data3.columns if col.endswith('_ref') or col.endswith('_alt')]
-            allele_freqs = data3[pop_columns].values
-            my_allel_matrix = helper.pairwise_fst(allele_freqs)
-            print(my_allel_matrix)
-        if (":" in selected_SNPid or ";" in selected_SNPid or selected_SNPid.startswith("rs")) or len(selected_gene)>0 or (len(selected_genomic_start)>0 and len(selected_genomic_end)>0) and len(selected_populations)>1:
-            genotype_columns = [col for col in data3.columns if col.endswith('_ref') or col.endswith('_alt')]
-            allele_counts_df = data3[genotype_columns]
-            allele_counts = allele_counts_df.values
+        
+        if (":" in selected_SNPid or ";" in selected_SNPid or selected_SNPid.startswith("rs")) or len(selected_gene) > 0 or (len(selected_genomic_start) > 0 and len(selected_genomic_end) > 0) and len(selected_populations) > 1:
+            genotype_columns = [col for col in data3.columns if col.endswith('_ref')]
+            pop_names = []
+            for i in genotype_columns:
+                pop_names.append(i[:3])
+            
+            Fst_matrix = helper.calculate_fst(data3, pop_names)
 
-            # Compute allele frequencies across populations
-            allele_freqs = allele_counts / allele_counts.sum(axis=1)[:, np.newaxis]
+            # Write Fst matrix to a text file
+            with open("Fst_matrix.txt", "w") as f:
+                f.write("Fst matrix:\n")
+                f.write("\t" + "\t".join(pop_names) + "\n")
+                for i in range(len(pop_names)):
+                    f.write(pop_names[i] + "\t" + "\t".join(map(str, Fst_matrix[i])) + "\n")
 
-            # Calculate average allele frequencies across populations
-            avg_allele_freqs = allele_freqs.mean(axis=0)
-
-            # Calculate expected heterozygosity within populations (Hs)
-            Hs = 2 * avg_allele_freqs * (1 - avg_allele_freqs)
-
-            # Calculate expected heterozygosity across populations (Ht)
-            Ht = 1 - np.sum(Hs)
-
-            # Get population names
-            pop_names = allele_counts_df.columns
-
-            # Calculate Fst for each pair of populations
-            num_pops = allele_counts.shape[1]
-            Fst_matrix = np.zeros((num_pops, num_pops))
-            for i in range(num_pops):
-                for j in range(i + 1, num_pops):
-                    Fst_matrix[i, j] = (Ht - (Hs[i] + Hs[j]) / 2) / Ht
-
-            # Set the lower triangular part of the matrix with the same values as the upper triangular part
-            Fst_matrix[np.tril_indices(num_pops)] = Fst_matrix.T[np.tril_indices(num_pops)]
-
-            # Print the Fst matrix with population names
-            print("Fst matrix for allel:")
-            print("\t" + "\t".join(pop_names))
-            for i in range(num_pops):
-                print(pop_names[i] + "\t" + "\t".join(map(str, Fst_matrix[i])))
+            # Create heatmap
+            plt.figure(figsize=(8, 6))
+            plt.imshow(Fst_matrix, cmap='hot', interpolation='nearest')
+            plt.colorbar(label='Fst values')
+            plt.title('Fst Matrix')
+            plt.xticks(np.arange(len(pop_names)), pop_names)
+            plt.yticks(np.arange(len(pop_names)), pop_names)
+            plt.xlabel('Populations')
+            plt.ylabel('Populations')
+            plt.tight_layout()
+            plt.savefig('C:/Users/andre/OneDrive/Masaüstü/Group_project_repo/Flask/static/images/'+'Fst_heatmap.png')
+            plt.show()
         else: 
             print('allele frequency not provided')
-
+        
         """
         call method to display genotypic frequencies for gene, snpid and genomic coordinates.
         
@@ -264,46 +247,6 @@ def analysis():
             print(data4)
         elif len(selected_genomic_start)>0 and len(selected_genomic_end)>0 and len(selected_populations)>0:
             print(data4) 
-        if (":" in selected_SNPid or ";" in selected_SNPid or selected_SNPid.startswith("rs")) or len(selected_gene)>0 or (len(selected_genomic_start)>0 and len(selected_genomic_end)>0) and len(selected_populations)>1:
-            genotype_columns = [col for col in data4.columns if col.endswith('_ref') or col.endswith('_alt') or col.endswith('_het')]
-            genotype_freqs_df = data4[genotype_columns]
-            genotype_freqs = genotype_freqs_df.values
-
-            # Calculate total allele counts
-            total_allele_counts = genotype_freqs.sum(axis=1)
-
-            # Separate homozygous and heterozygous allele counts
-            homozygous_allele_counts = genotype_freqs[:, :2].sum(axis=1)
-            heterozygous_allele_counts = genotype_freqs[:, 2]
-
-            # Calculate allele frequencies
-            allele_freqs = homozygous_allele_counts / (2 * total_allele_counts)
-
-            # Calculate expected heterozygosity within populations (Hs)
-            Hs = 2 * allele_freqs * (1 - allele_freqs) * total_allele_counts / (total_allele_counts - 1)
-
-            # Calculate expected heterozygosity across populations (Ht)
-            Ht = 1 - np.sum(Hs / total_allele_counts)
-
-            # Get population names
-            pop_names = [col[:-4] for col in genotype_columns]
-
-            # Calculate Fst for each pair of populations
-            num_pops = len(pop_names)
-            Fst_matrix = np.zeros((num_pops, num_pops))
-            for i in range(num_pops):
-                for j in range(i + 1, num_pops):
-                    Fst_matrix[i, j] = (Ht - (Hs[i] + Hs[j]) / 2) / Ht
-
-            # Set the lower triangular part of the matrix with the same values as the upper triangular part
-            Fst_matrix[np.tril_indices(num_pops)] = Fst_matrix.T[np.tril_indices(num_pops)]
-
-            # Print the Fst matrix with population names
-            print("Fst matrix for genotype:")
-            print("\t" + "\t".join(pop_names))
-            for i in range(num_pops):
-                print(pop_names[i] + "\t" + "\t".join(map(str, Fst_matrix[i])))
-        
         
         else: 
             print('genotype frequency not provided')
