@@ -7,6 +7,7 @@ from wtforms.validators import Optional, DataRequired
 import helper
 from database import setup, close
 from pandas.plotting import table
+import os
 # Initialise the Flask application & set secret key for CSRF protection
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'sdfgklhjersjio49430-9534-5'
@@ -174,7 +175,10 @@ def analysis():
         selected_gene = request.form.get('gene_names')
         selected_genomic_start= request.form.get('genomic_start')
         selected_genomic_end=request.form.get('genomic_end')
-
+        
+        if os.path.exists('S:/Documents/UNIVERSITY/POSTGRADUATE/SLACKWARE/Flask/static/images/fst_plot.png'):
+            os.remove('S:/Documents/UNIVERSITY/POSTGRADUATE/SLACKWARE/Flask/static/images/fst_plot.png')
+        fst_plot_filename = "fst_plot.png"
         """"
         call method to display clinical relevance for gene, snpid and genomic coordinates.
         
@@ -203,7 +207,7 @@ def analysis():
         
 
 
-        if (":" in selected_SNPid or ";" in selected_SNPid or selected_SNPid.startswith("rs")) or len(selected_gene)>0 or (len(selected_genomic_start)>0 and len(selected_genomic_end)>0):
+        if ((":" in selected_SNPid or ";" in selected_SNPid or selected_SNPid.startswith("rs")) or len(selected_gene)>0 or (len(selected_genomic_start)>0 and len(selected_genomic_end)>0)) and len(selected_populations) > 0 :
             if not data3.empty:
                 # Specify the file path
                 file_path = 'S:/Documents/UNIVERSITY/POSTGRADUATE/SLACKWARE/Flask/static/txt_files/'+'allel_frequency_data.txt'
@@ -215,7 +219,7 @@ def analysis():
         else:
                 print("DataFrame is empty. Skipping table image creation.")
         
-        if (":" in selected_SNPid or ";" in selected_SNPid or selected_SNPid.startswith("rs")) or len(selected_gene) > 0 or (len(selected_genomic_start) > 0 and len(selected_genomic_end) > 0) and len(selected_populations) > 1:
+        if ((":" in selected_SNPid or ";" in selected_SNPid or selected_SNPid.startswith("rs")) or len(selected_gene) > 0 or (len(selected_genomic_start) > 0 and len(selected_genomic_end) > 0)) and len(selected_populations) > 1:
             genotype_columns = [col for col in data3.columns if col.endswith('_ref')]
             pop_names = []
             for i in genotype_columns:
@@ -245,8 +249,8 @@ def analysis():
             plt.xlabel('Populations')
             plt.ylabel('Populations')
             plt.tight_layout()
-            plt.savefig('S:/Documents/UNIVERSITY/POSTGRADUATE/SLACKWARE/Flask/static/images/'+'Fst_heatmap.png')
-            plt.show()
+            plt.savefig('S:/Documents/UNIVERSITY/POSTGRADUATE/SLACKWARE/Flask/static/images/'+'fst_plot.png')
+            plt.close()
        
         else: 
             print('allele frequency not provided')
@@ -273,7 +277,7 @@ def analysis():
         Call method to display pairwise popualtion matrix and visualise it
         
         """
-
+        session['fst_image'] = fst_plot_filename
         return redirect(url_for('results'))
     return render_template('analysis.html', form=form)
 
@@ -288,7 +292,8 @@ def results():
     # Retrieve filenames from session if they exist; else, use None
     pca_image = session.get('pca_image', None)
     adm_image = session.get('adm_image', None)
-    return render_template('results.html', pca_image=pca_image, adm_image=adm_image)
+    fst_image = session.get('fst_image', None)
+    return render_template('results.html', pca_image=pca_image, adm_image=adm_image, fst_image=fst_image)
 
 
 if __name__ == '__main__':

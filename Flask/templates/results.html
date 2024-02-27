@@ -23,16 +23,18 @@
             </div>
         {% endif %}
 
+        <!-- Display FST Results if available -->
+        {% if fst_image %}
+            <div id="fst-results">
+                <h2>FST Results</h2>
+                <img src="{{ url_for('static', filename='images/' + fst_image) }}" alt="FST Results" style="max-width: 100%;">
+            </div>
+        {% endif %}
+
         <!-- Placeholder for SNP/Gene/Region Query Results -->
         <div id="query-results">
             <h2>Genetic Query Results</h2>
             <p>Results for specific SNP, gene, or region queries will be shown here.</p>
-        </div>
-
-        <!-- Placeholder for Visual Representation of Genetic Differentiation -->
-        <div id="genetic-diff-visualization">
-            <h2>Genetic Differentiation Visualization</h2>
-            <p>A visual representation of genetic differentiation will be presented here.</p>
         </div>
     </div>
 {% endblock %}
