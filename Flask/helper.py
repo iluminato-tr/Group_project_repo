@@ -20,7 +20,7 @@ def get_population_data(SelPop_populations, SelPop_superpopulations, connection)
         WHERE s.population_code IN (%(val)s); 
         """
         values = ', '.join(["'{}'".format(value) for value in SelPop_populations])
-    else: 
+    elif len(SelPop_superpopulations) > 0: 
         pop_query = """
         SELECT s.sample_id, pc.PC1, pc.PC2, s.population_code, s.superpopulation_code 
         FROM pca as pc

@@ -6,7 +6,7 @@ from wtforms import SelectMultipleField, SubmitField, StringField, TextAreaField
 from wtforms.validators import Optional, DataRequired
 import helper
 from database import setup, close
-import allel
+from pandas.plotting import table
 # Initialise the Flask application & set secret key for CSRF protection
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'sdfgklhjersjio49430-9534-5'
@@ -130,6 +130,7 @@ def population_analysis():
         SelPop_superpopulations = request.form.getlist('Pop_superpopulations')
         data = helper.get_population_data(SelPop_populations, SelPop_superpopulations, connection)
         data1 = helper.get_pop_data(SelPop_populations, SelPop_superpopulations, connection)
+        
         """
         call method to do plot pca result
 
@@ -181,14 +182,18 @@ def analysis():
 
         data2= helper.get_clinical_data(selected_SNPid, selected_gene, selected_genomic_start, selected_genomic_end, connection)
         
-        if ":" in selected_SNPid or ";" in selected_SNPid or selected_SNPid.startswith("rs"):
-            print(data2)
-        elif len(selected_gene)>0:
-            print(data2)
-        elif len(selected_genomic_start)>0 and len(selected_genomic_end)>0:
-            print(data2)
+        if (":" in selected_SNPid or ";" in selected_SNPid or selected_SNPid.startswith("rs")) or len(selected_gene)>0 or (len(selected_genomic_start)>0 and len(selected_genomic_end)>0):
+            if not data2.empty:
+                # Specify the file path
+                file_path = 'table_data.txt'
+
+                # Save DataFrame to a text file
+                data2.to_csv(file_path, sep=',', index=False)
+
+                print(f"DataFrame saved as text file: {file_path}")
         else:
-            print('Clinical releevance not provided')
+                print("DataFrame is empty. Skipping table image creation.")
+        
 
         """
         call method to display allele frequencies for gene, snpid and genomic coordinates.
@@ -225,6 +230,11 @@ def analysis():
             plt.imshow(Fst_matrix, cmap='hot', interpolation='nearest')
             plt.colorbar(label='Fst values')
             plt.title('Fst Matrix')
+            # Annotate heatmap with Fst values
+            for i in range(len(pop_names)):
+                for j in range(len(pop_names)):
+                    plt.text(j, i, format(Fst_matrix[i, j], '.2f'),
+                            ha="center", va="center", color="purple")
             plt.xticks(np.arange(len(pop_names)), pop_names)
             plt.yticks(np.arange(len(pop_names)), pop_names)
             plt.xlabel('Populations')
@@ -232,6 +242,7 @@ def analysis():
             plt.tight_layout()
             plt.savefig('C:/Users/andre/OneDrive/Masaüstü/Group_project_repo/Flask/static/images/'+'Fst_heatmap.png')
             plt.show()
+       
         else: 
             print('allele frequency not provided')
         

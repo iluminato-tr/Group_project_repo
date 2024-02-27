@@ -5,6 +5,11 @@
 
 {% block content %}
     <h1>Population Analysis</h1>
+    {% if error_message %}
+        <div class="alert alert-danger" role="alert">
+            {{ error_message }}
+        </div>
+    {% endif %}
     <form method="POST" action="{{ url_for('population_analysis') }}">
         {{ form.hidden_tag() }}
 
@@ -17,6 +22,7 @@
                     <label class="form-check-label" for="{{ subfield.id }}">{{ subfield.label.text }}</label>
                 </div>
             {% endfor %}
+
         </div>
 
         <!-- Dynamically displayed superpopulations selection based on user choice -->
