@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+
+{% block title %}Analysis Results{% endblock %}
+
+{% block content %}
+<h1>Analysis Results</h1>
+<div class="results-content">
+    <!-- Display PCA Results if available -->
+    {% if pca_image %}
+    <div id="pca-results">
+        <h2>PCA Results</h2>
+        <img src="{{ url_for('static', filename='images/' + pca_image) }}" alt="PCA Results" style="max-width: 100%;">
+    </div>
+    {% endif %}
+
+    <!-- Display ADMIXTURE Results if available -->
+    {% if adm_image %}
+    <div id="admixture-results">
+        <h2>ADMIXTURE Results</h2>
+        <img src="{{ url_for('static', filename='images/' + adm_image) }}" alt="ADMIXTURE Results" style="max-width: 100%;">
+    </div>
+    {% endif %}
+
+    <!-- Clinical Relevance Table -->
+    {% if session.clinical_data %}
+    <div id="clinical-relevance-results" style="max-height: 400px; overflow-y: auto;">
+        <h2>Clinical Relevance Results</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>SNP ID</th>
+                    <th>Gene Name</th>
+                    <th>Phenotype</th>
+                    <th>Molecular Consequence</th>
+                    <!-- Add other headers as needed -->
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in session.clinical_data %}
+                <tr>
+                    <td>{{ row.snpid }}</td>
+                    <td>{{ row.geneName }}</td>
+                    <td>{{ row.phenotype }}</td>
+                    <td>{{ row.molecular_consequence }}</td>
+                    <!-- Add other data cells as needed -->
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+
+    <!-- Allele Frequencies Table -->
+    {% if session.allele_frequency_data %}
+    <div id="allele-frequency-results">
+        <h2>Allele Frequency Results</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>SNP ID</th>
+                    <th>Population</th>
+                    <th>Ref Allele Frequency</th>
+                    <th>Alt Allele Frequency</th>
+                    <!-- Add other headers as needed -->
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in session.allele_frequency_data %}
+                <tr>
+                    <td>{{ row.snpId }}</td>
+                    <td>{{ row.population }}</td>
+                    <td>{{ row.ref_freq }}</td>
+                    <td>{{ row.alt_freq }}</td>
+                    <!-- Add other data cells as needed -->
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+    <!-- Genotype Frequencies Table -->
+    {% if session.genotype_frequency_data %}
+    <div id="genotype-frequency-results">
+        <h2>Genotype Frequency Results</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>SNP ID</th>
+                    <th>Population</th>
+                    <th>Hom Ref</th>
+                    <th>Hom Alt</th>
+                    <th>Het</th>
+                    <!-- Add other headers as needed -->
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in session.genotype_frequency_data %}
+                <tr>
+                    <td>{{ row.snpId }}</td>
+                    <td>{{ row.population }}</td>
+                    <td>{{ row.hom_ref }}</td>
+                    <td>{{ row.hom_alt }}</td>
+                    <td>{{ row.het }}</td>
+                    <!-- Add other data cells as needed -->
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+    <!-- Visual Representation of Genetic Differentiation if available
+    {% if session.pairwise_fst %}
+    <div id="genetic-diff-visualization">
+        <h2>Genetic Differentiation Visualization</h2>
+        <img src="{{ url_for('static', filename='images/' + session.pairwise_fst) }}" alt="Pairwise FST Results" style="max-width: 100%;">
+    </div>
+    {% endif %} -->
+</div>
+{% endblock %}

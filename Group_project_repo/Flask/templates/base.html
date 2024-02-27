@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <!-- Page title block, dynamically set by each page -->
+    <title>{% block title %}{% endblock %} - Bioinformatics Project</title>
+    <!-- Link to the main stylesheet -->
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <!-- Navigation bar for easy navigation between different sections of the application -->
+    <div class="navbar">
+        <a href="/">Home</a>
+        <a href="/population_analysis">Population Analysis</a>
+        <a href="/analysis">SNP Analysis</a>
+        <a href="/results">Analysis Results</a>
+    </div>
+    <!-- Main content block, content for each page is dynamically inserted here -->
+    {% block content %}{% endblock %}
+</body>
+</html>

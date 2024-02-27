@@ -1,0 +1,109 @@
+<!-- Inherits from base layout -->
+{% extends 'base.html' %}
+
+{% block title %}Data Analysis{% endblock %}
+
+{% block content %}
+    <h1>SNP Analysis</h1>
+    <form method="POST" action="{{ url_for('analysis') }}">
+        {{ form.hidden_tag() }}
+
+        <!-- Directly display the population selection without conditional logic -->
+        <div class="form-group">
+            <label class="main-label">Choose a Population(s):</label>
+            {{ form.populations(class="form-control") }}
+            <small class="form-text text-muted">Hold Ctrl (or Command on Mac) / Click and drag to select multiple populations.</small>
+        </div>
+        
+        
+
+
+        <!-- Selection for choosing the type of SNP analysis query -->
+        <div class="form-group">
+            <label class="main-label">SNP Analysis Query Type:</label>
+            {% for subfield in form.query_type %}
+                <div class="form-check">
+                    <!-- Display options for SNP, Gene or Region queries -->
+                    {{ subfield() }}
+                    <label class="form-check-label" for="{{ subfield.id }}">{{ subfield.label.text }}</label>
+                </div>
+            {% endfor %}
+        </div>
+
+        <!-- SNP IDs field -->
+        <div id="snp_ids" class="form-group" style="display:none;">
+            {{ form.snp_ids.label }}
+            {{ form.snp_ids(class="form-control", rows=4) }}
+        </div>
+
+        <!-- Genomic Coordinates field -->
+        <div id="genomic_coords" class="form-group" style="display:none;">
+            {{ form.genomic_start.label }}
+            {{ form.genomic_start(class="form-control") }}
+            {{ form.genomic_end.label }}
+            {{ form.genomic_end(class="form-control") }}
+        </div>
+
+        <!-- Gene Names field -->
+        <div id="gene_names" class="form-group" style="display:none;">
+            {{ form.gene_names.label }}
+            {{ form.gene_names(class="form-control") }}
+        </div>
+
+
+        <!-- Submit button -->
+        <div class="form-group">
+            {{ form.submit(class="btn btn-primary") }}
+        </div>
+    </form>
+
+    <!-- JavaScript to handle dynamic display and input reset based on query type selections -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Function to clear input fields
+            function clearInputFields() {
+                document.getElementById('snp_ids').querySelector('textarea').value = '';
+                document.getElementById('genomic_start').value = '';
+                document.getElementById('genomic_end').value = '';
+                document.getElementById('gene_names').querySelector('input').value = '';
+            }
+    
+            // Function to update the display of SNP ID, genomic coordinates, or gene names input based on type selected
+            function updateQueryTypeDisplay() {
+                const queryTypeValue = document.querySelector('input[name="query_type"]:checked')?.value;
+                const snpIdsInputContainer = document.getElementById('snp_ids');
+                const genomicCoordsContainer = document.getElementById('genomic_coords');
+                const geneNamesInputContainer = document.getElementById('gene_names');
+    
+                // Clear input fields when changing query types
+                clearInputFields();
+    
+                // Initially hide all input containers
+                snpIdsInputContainer.style.display = 'none';
+                genomicCoordsContainer.style.display = 'none';
+                geneNamesInputContainer.style.display = 'none';
+    
+                // Show relevant input field based on selected query type
+                if (queryTypeValue === 'snp') {
+                    snpIdsInputContainer.style.display = 'block';
+                } else if (queryTypeValue === 'region') {
+                    genomicCoordsContainer.style.display = 'block';
+                } else if (queryTypeValue === 'gene') {
+                    geneNamesInputContainer.style.display = 'block';
+                }
+            }
+
+            
+            // Event listeners for query type to trigger display updates
+            document.querySelectorAll('input[name="query_type"]').forEach(radio => {
+                radio.addEventListener('change', updateQueryTypeDisplay);
+            });
+    
+            // Initial display update
+            updateQueryTypeDisplay();
+        });
+    </script>
+    
+
+
+{% endblock %}
