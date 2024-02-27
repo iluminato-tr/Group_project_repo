@@ -293,7 +293,9 @@ def results():
     pca_image = session.get('pca_image', None)
     adm_image = session.get('adm_image', None)
     fst_image = session.get('fst_image', None)
-    return render_template('results.html', pca_image=pca_image, adm_image=adm_image, fst_image=fst_image)
+    fst_matrix_path = os.path.join(app.root_path, 'static', 'txt_files', 'Fst_matrix.txt')
+    fst_matrix_exists = os.path.isfile(fst_matrix_path)
+    return render_template('results.html', pca_image=pca_image, adm_image=adm_image, fst_image=fst_image, fst_matrix_exists=fst_matrix_exists)
 
 
 if __name__ == '__main__':
