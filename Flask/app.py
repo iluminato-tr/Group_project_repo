@@ -203,7 +203,7 @@ def analysis():
         
 
 
-        if (":" in selected_SNPid or ";" in selected_SNPid or selected_SNPid.startswith("rs")) or len(selected_gene)>0 or (len(selected_genomic_start)>0 and len(selected_genomic_end)>0):
+        if ((":" in selected_SNPid or ";" in selected_SNPid or selected_SNPid.startswith("rs")) or len(selected_gene)>0 or (len(selected_genomic_start)>0 and len(selected_genomic_end)>0)) and len(selected_populations) > 0 :
             if not data3.empty:
                 # Specify the file path
                 file_path = 'C:/Users/andre/OneDrive/Masaüstü/Group_project_repo/Flask/static/txt_files/'+'allel_frequency_data.txt'
@@ -215,7 +215,7 @@ def analysis():
         else:
                 print("DataFrame is empty. Skipping table image creation.")
         
-        if (":" in selected_SNPid or ";" in selected_SNPid or selected_SNPid.startswith("rs")) or len(selected_gene) > 0 or (len(selected_genomic_start) > 0 and len(selected_genomic_end) > 0) and len(selected_populations) > 1:
+        if ((":" in selected_SNPid or ";" in selected_SNPid or selected_SNPid.startswith("rs")) or len(selected_gene) > 0 or (len(selected_genomic_start) > 0 and len(selected_genomic_end) > 0)) and len(selected_populations) > 1:
             genotype_columns = [col for col in data3.columns if col.endswith('_ref')]
             pop_names = []
             for i in genotype_columns:
