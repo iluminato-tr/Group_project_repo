@@ -236,10 +236,11 @@ def analysis():
             plt.colorbar(label='Fst values')
             plt.title('Fst Matrix')
             # Annotate heatmap with Fst values
-            for i in range(len(pop_names)):
-                for j in range(len(pop_names)):
-                    plt.text(j, i, format(Fst_matrix[i, j], '.2f'),
-                            ha="center", va="center", color="purple")
+            if len(selected_populations)<8:
+                for i in range(len(pop_names)):
+                    for j in range(len(pop_names)):
+                        plt.text(j, i, format(Fst_matrix[i, j], '.2f'),
+                                ha="center", va="center", color="purple")
             plt.xticks(np.arange(len(pop_names)), pop_names)
             plt.yticks(np.arange(len(pop_names)), pop_names)
             plt.xlabel('Populations')
