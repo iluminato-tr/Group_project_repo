@@ -185,7 +185,7 @@ def analysis():
         if (":" in selected_SNPid or ";" in selected_SNPid or selected_SNPid.startswith("rs")) or len(selected_gene)>0 or (len(selected_genomic_start)>0 and len(selected_genomic_end)>0):
             if not data2.empty:
                 # Specify the file path
-                file_path = 'table_data.txt'
+                file_path = 'C:/Users/andre/OneDrive/Masaüstü/Group_project_repo/Flask/static/txt_files/'+'Clinical_data.txt'
 
                 # Save DataFrame to a text file
                 data2.to_csv(file_path, sep=',', index=False)
@@ -203,12 +203,17 @@ def analysis():
         
 
 
-        if ":" in selected_SNPid or ";" in selected_SNPid or selected_SNPid.startswith("rs") and len(selected_populations)>0:
-            print(data3)
-        elif len(selected_gene)>0 and len(selected_populations)>0:
-            print(data3)
-        elif len(selected_genomic_start)>0 and len(selected_genomic_end)>0 and len(selected_populations)>0:
-            print(data3) 
+        if (":" in selected_SNPid or ";" in selected_SNPid or selected_SNPid.startswith("rs")) or len(selected_gene)>0 or (len(selected_genomic_start)>0 and len(selected_genomic_end)>0):
+            if not data3.empty:
+                # Specify the file path
+                file_path = 'C:/Users/andre/OneDrive/Masaüstü/Group_project_repo/Flask/static/txt_files/'+'allel_frequency_data.txt'
+
+                # Save DataFrame to a text file
+                data3.to_csv(file_path, sep=',', index=False)
+
+                print(f"DataFrame saved as text file: {file_path}")
+        else:
+                print("DataFrame is empty. Skipping table image creation.")
         
         if (":" in selected_SNPid or ";" in selected_SNPid or selected_SNPid.startswith("rs")) or len(selected_gene) > 0 or (len(selected_genomic_start) > 0 and len(selected_genomic_end) > 0) and len(selected_populations) > 1:
             genotype_columns = [col for col in data3.columns if col.endswith('_ref')]
@@ -219,7 +224,7 @@ def analysis():
             Fst_matrix = helper.calculate_fst(data3, pop_names)
 
             # Write Fst matrix to a text file
-            with open("Fst_matrix.txt", "w") as f:
+            with open('C:/Users/andre/OneDrive/Masaüstü/Group_project_repo/Flask/static/txt_files/'+"Fst_matrix.txt", "w") as f:
                 f.write("Fst matrix:\n")
                 f.write("\t" + "\t".join(pop_names) + "\n")
                 for i in range(len(pop_names)):
@@ -252,15 +257,16 @@ def analysis():
         """
         data4= helper.get_genotype_frequency(selected_SNPid, selected_gene, selected_genomic_start, selected_genomic_end, selected_populations, connection)
 
-        if ":" in selected_SNPid or ";" in selected_SNPid or selected_SNPid.startswith("rs") and len(selected_populations)>0:
-            print(data4)
-        elif len(selected_gene)>0 and len(selected_populations)>0:
-            print(data4)
-        elif len(selected_genomic_start)>0 and len(selected_genomic_end)>0 and len(selected_populations)>0:
-            print(data4) 
-        
-        else: 
-            print('genotype frequency not provided')
+        if not data4.empty:
+                # Specify the file path
+                file_path = 'C:/Users/andre/OneDrive/Masaüstü/Group_project_repo/Flask/static/txt_files/'+'Genotype_frequency_data.txt'
+
+                # Save DataFrame to a text file
+                data4.to_csv(file_path, sep=',', index=False)
+
+                print(f"DataFrame saved as text file: {file_path}")
+        else:
+                print("DataFrame is empty. Skipping table image creation.")
 
         """
 
