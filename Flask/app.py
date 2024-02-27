@@ -281,12 +281,12 @@ def analysis():
         return redirect(url_for('results'))
     return render_template('analysis.html', form=form)
 
-
+# Route for home page
 @app.route('/')
 def home():
     return render_template('home.html')
 
-# Route for the home page
+# Route for the results page
 @app.route('/results')
 def results():
     # Retrieve filenames from session if they exist; else, use None
