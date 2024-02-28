@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, session
+from flask import Flask, render_template, request, redirect, url_for, session, flash
 from flask_wtf import FlaskForm
 from matplotlib import pyplot as plt
 import numpy as np
@@ -126,6 +126,18 @@ class PopulationAnalysisForm(FlaskForm):
 def population_analysis():
     form = PopulationAnalysisForm()
     if form.validate_on_submit():
+        # Custom validation based on the selected analysis scope
+        analysis_scope = request.form.get('Pop_scope')
+        selected_superpopulations = request.form.getlist('Pop_superpopulations')
+        selected_populations = request.form.getlist('Pop_populations')
+
+        if analysis_scope == 'superpopulation' and not selected_superpopulations:
+            flash('Please select at least one superpopulation.', 'error')
+            return render_template('population_analysis.html', form=form)
+        elif analysis_scope == 'population' and not selected_populations:
+            flash('Please select at least one population.', 'error')
+            return render_template('population_analysis.html', form=form)
+        
         # Retrieve selected populations and superpopulations from form
         SelPop_populations = request.form.getlist('Pop_populations')
         SelPop_superpopulations = request.form.getlist('Pop_superpopulations')

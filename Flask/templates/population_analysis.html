@@ -81,6 +81,25 @@
             });
 
             updateDisplay(); // Initialize display settings on page load
+
+            // New JavaScript code for form submission validation
+            document.querySelector('form').addEventListener('submit', function(e) {
+                let analysisScope = document.querySelector('input[name="Pop_scope"]:checked')?.value;
+                let hasSelection = false;
+                
+                if (analysisScope === 'superpopulation') {
+                    // Check if any superpopulation option is selected
+                    hasSelection = document.querySelector('#Pop_superpopulations select').selectedOptions.length > 0;
+                } else if (analysisScope === 'population') {
+                    // Check if any population option is selected
+                    hasSelection = document.querySelector('#Pop_populations select').selectedOptions.length > 0;
+                }
+
+                if (!hasSelection) {
+                    e.preventDefault(); // Prevent form submission
+                    alert('Please select at least one option from the visible selection field.');
+                }
+            });
         });
     </script>
 {% endblock %}
