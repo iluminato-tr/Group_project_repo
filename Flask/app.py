@@ -184,10 +184,10 @@ def analysis():
     if form.validate_on_submit():
     # Form data processing to be completed, for now it prints input and redirects to results
         # Paths to the CSV files
-        clinical_data_path = 'S:/Documents/UNIVERSITY/POSTGRADUATE/SLACKWARE/Flask/static/txt_files/Clinical_data.txt'
-        allele_frequency_data_path = 'S:/Documents/UNIVERSITY/POSTGRADUATE/SLACKWARE/Flask/static/txt_files/allel_frequency_data.txt'
-        genotype_frequency_data_path = 'S:/Documents/UNIVERSITY/POSTGRADUATE/SLACKWARE/Flask/static/txt_files/Genotype_frequency_data.txt'
-        fst_matrix_data_path = 'S:/Documents/UNIVERSITY/POSTGRADUATE/SLACKWARE/Flask/static/txt_files/Fst_matrix.txt'
+        clinical_data_path = 'C:/Users/andre/OneDrive/Masaüstü/Group_project_repo/Flask/static/txt_files/Clinical_data.txt'
+        allele_frequency_data_path = 'C:/Users/andre/OneDrive/Masaüstü/Group_project_repo/Flask/static/txt_files/allel_frequency_data.txt'
+        genotype_frequency_data_path = 'C:/Users/andre/OneDrive/Masaüstü/Group_project_repo/Flask/static/txt_files/Genotype_frequency_data.txt'
+        fst_matrix_data_path = 'C:/Users/andre/OneDrive/Masaüstü/Group_project_repo/Flask/static/txt_files/Fst_matrix.txt'
         # Delete existing files if they exist before processing a new query
         for file_path in [clinical_data_path, allele_frequency_data_path, genotype_frequency_data_path, fst_matrix_data_path]:
             if os.path.exists(file_path):
@@ -199,8 +199,8 @@ def analysis():
         selected_genomic_start= request.form.get('genomic_start')
         selected_genomic_end=request.form.get('genomic_end')
         
-        if os.path.exists('S:/Documents/UNIVERSITY/POSTGRADUATE/SLACKWARE/Flask/static/images/fst_plot.png'):
-            os.remove('S:/Documents/UNIVERSITY/POSTGRADUATE/SLACKWARE/Flask/static/images/fst_plot.png')
+        if os.path.exists('C:/Users/andre/OneDrive/Masaüstü/Group_project_repo/Flask/static/images/fst_plot.png'):
+            os.remove('C:/Users/andre/OneDrive/Masaüstü/Group_project_repo/Flask/static/images/fst_plot.png')
         fst_plot_filename = "fst_plot.png"
         """"
         call method to display clinical relevance for gene, snpid and genomic coordinates.
@@ -268,8 +268,8 @@ def analysis():
                     for j in range(len(pop_names)):
                         plt.text(j, i, format(Fst_matrix[i, j], '.2f'),
                                 ha="center", va="center", color="purple")
-            plt.xticks(np.arange(len(pop_names)), pop_names)
-            plt.yticks(np.arange(len(pop_names)), pop_names)
+            plt.xticks(np.arange(len(pop_names)), pop_names,rotation=45)
+            plt.yticks(np.arange(len(pop_names)), pop_names,rotation = 45)
             plt.xlabel('Populations')
             plt.ylabel('Populations')
             plt.tight_layout()
@@ -340,7 +340,7 @@ def results():
     rows_per_page = 10
 
     # Clinical Data
-    clinical_data_path = 'S:/Documents/UNIVERSITY/POSTGRADUATE/SLACKWARE/Flask/static/txt_files/Clinical_data.txt'
+    clinical_data_path = 'C:/Users/andre/OneDrive/Masaüstü/Group_project_repo/Flask/static/txt_files/Clinical_data.txt'
     if os.path.exists(clinical_data_path):
         clinical_skip = (clinical_page - 1) * rows_per_page
         clinical_df = pd.read_csv(clinical_data_path, skiprows=range(1, clinical_skip + 1), nrows=rows_per_page)
@@ -349,7 +349,7 @@ def results():
         more_rows_clinical = not next_page_clinical_df.empty
 
     # Allele Frequency Data
-    allele_data_path = 'S:/Documents/UNIVERSITY/POSTGRADUATE/SLACKWARE/Flask/static/txt_files/allel_frequency_data.txt'
+    allele_data_path = 'C:/Users/andre/OneDrive/Masaüstü/Group_project_repo/Flask/static/txt_files/allel_frequency_data.txt'
     if os.path.exists(allele_data_path):
         allele_skip = (allele_page - 1) * rows_per_page
         allele_df = pd.read_csv(allele_data_path, skiprows=range(1, allele_skip + 1), nrows=rows_per_page)
@@ -358,7 +358,7 @@ def results():
         more_rows_allele = not next_page_allele_df.empty
 
     # Genotype Frequency Data
-    genotype_data_path = 'S:/Documents/UNIVERSITY/POSTGRADUATE/SLACKWARE/Flask/static/txt_files/Genotype_frequency_data.txt'
+    genotype_data_path = 'C:/Users/andre/OneDrive/Masaüstü/Group_project_repo/Flask/static/txt_files/Genotype_frequency_data.txt'
     if os.path.exists(genotype_data_path):
         genotype_skip = (genotype_page - 1) * rows_per_page
         genotype_df = pd.read_csv(genotype_data_path, skiprows=range(1, genotype_skip + 1), nrows=rows_per_page)
