@@ -158,6 +158,7 @@ def population_analysis():
             admixture_plot_filename = helper.plot_adm(data1, 'superpopulation_code', SelPop_populations, admixture_plot_filename) 
         session['pca_image'] = pca_plot_filename
         session['adm_image'] = admixture_plot_filename
+        session['query_submitted'] = True
         return redirect(url_for('results'))
         # return render_template('results.html', pca_image=pca_plot_filename, adm_image = admixture_plot_filename)
     return render_template('population_analysis.html', form=form)
@@ -178,7 +179,7 @@ def analysis():
         for file_path in [clinical_data_path, allele_frequency_data_path, genotype_frequency_data_path]:
             if os.path.exists(file_path):
                 os.remove(file_path)
-                
+
         selected_populations = request.form.getlist('populations')
         selected_SNPid = request.form.get('snp_ids')
         selected_gene = request.form.get('gene_names')
@@ -287,6 +288,7 @@ def analysis():
         
         """
         session['fst_image'] = fst_plot_filename
+        session['query_submitted'] = True
         return redirect(url_for('results'))
     return render_template('analysis.html', form=form)
 
@@ -347,8 +349,8 @@ def results():
         genotype_html = genotype_df.to_html(classes='table table-striped', index=False)
         next_page_genotype_df = pd.read_csv(genotype_data_path, skiprows=range(1, genotype_skip + rows_per_page + 1), nrows=1)
         more_rows_genotype = not next_page_genotype_df.empty
-
-    return render_template('results.html', pca_image=pca_image, adm_image=adm_image, fst_image=fst_image, fst_matrix_exists=fst_matrix_exists, clinical_table=clinical_html, clinical_page=clinical_page, more_rows_clinical=more_rows_clinical, allele_table=allele_html, allele_page=allele_page, more_rows_allele=more_rows_allele, genotype_table=genotype_html, genotype_page=genotype_page, more_rows_genotype=more_rows_genotype)
+    query_submitted = session.get('query_submitted', False)
+    return render_template('results.html', query_submitted=query_submitted, pca_image=pca_image, adm_image=adm_image, fst_image=fst_image, fst_matrix_exists=fst_matrix_exists, clinical_table=clinical_html, clinical_page=clinical_page, more_rows_clinical=more_rows_clinical, allele_table=allele_html, allele_page=allele_page, more_rows_allele=more_rows_allele, genotype_table=genotype_html, genotype_page=genotype_page, more_rows_genotype=more_rows_genotype)
 
 if __name__ == '__main__':
     app.run(debug=True)
