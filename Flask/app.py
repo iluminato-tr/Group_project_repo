@@ -67,8 +67,9 @@ class SNPAnalysisForm(FlaskForm):
     gene_names = StringField('Gene Names (comma-separated)', validators=[Optional()])
 
 
-    genomic_start = StringField('Genomic Start Position:', validators=[Optional()])
-    genomic_end = StringField('Genomic End Position:', validators=[Optional()])
+    genomic_start = StringField('Genomic Start Position:', id='genomic_start', validators=[Optional()])
+    genomic_end = StringField('Genomic End Position:', id='genomic_end', validators=[Optional()])
+
 
     # Submit button for the form
     submit = SubmitField('Submit Query')
