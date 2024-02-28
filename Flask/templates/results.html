@@ -6,92 +6,94 @@
     <h1>Analysis Results</h1>
     {% if query_submitted %}
         <div class="results-content">
-            <!-- Display PCA Results if available -->
-            {% if pca_image %}
-                <div id="pca-results">
-                    <h2>PCA Results</h2>
-                    <img src="{{ url_for('static', filename='images/' + pca_image) }}" alt="PCA Results" style="max-width: 100%;">
-                </div>
-                {% elif no_data_message %}
-                <p>{{ no_data_message }}</p>
-            {% endif %}
-
-            <!-- Display ADMIXTURE Results if available -->
-            {% if adm_image %}
-                <div id="admixture-results">
-                    <h2>ADMIXTURE Results</h2>
-                    <img src="{{ url_for('static', filename='images/' + adm_image) }}" alt="ADMIXTURE Results" style="max-width: 100%;">
-                </div>
-            {% endif %}
-
-            <!-- Display FST Results if available -->
-            {% if fst_image %}
-                <div id="fst-results">
-                    <h2>FST Results</h2>
-                    <img src="{{ url_for('static', filename='images/' + fst_image) }}" alt="FST Results" style="max-width: 100%;">
-                    {% if fst_matrix_exists %}
-                        <a href="/static/txt_files/Fst_matrix.txt" download="Fst_matrix.txt" class="btn btn-primary">Download FST Matrix</a>
+                {% if query_type == 'population_analysis' %}
+                    <!-- Display PCA Results if available -->
+                    {% if pca_image %}
+                        <div id="pca-results">
+                            <h2>PCA Results</h2>
+                            <img src="{{ url_for('static', filename='images/' + pca_image) }}" alt="PCA Results" style="max-width: 100%;">
+                        </div>
+                        {% elif no_data_message %}
+                        <p>{{ no_data_message }}</p>
                     {% endif %}
-                </div>
-            {% endif %}
 
-            <!-- Conditional Display for Clinical Data Results with Pagination -->
-            {% if clinical_table %}
-            <div id="clinical-data-results">
-                <h2>Clinical Data</h2>
-                {{ clinical_table|safe }}
-                <nav aria-label="Page navigation example">
-                    <ul class="pagination">
-                        {% if clinical_page > 1 %}
-                            <li class="page-item"><a class="page-link" href="{{ url_for('results', clinical_page=clinical_page-1, allele_page=allele_page, genotype_page=genotype_page) }}">Previous</a></li>
-                        {% endif %}
-                        {% if more_rows_clinical %}
-                            <li class="page-item"><a class="page-link" href="{{ url_for('results', clinical_page=clinical_page+1, allele_page=allele_page, genotype_page=genotype_page) }}">Next</a></li>
-                        {% endif %}
-                    </ul>
-                </nav>
-            </div>
-            {% else %}
-            <div id="no-clinical-data">
-                <p>No clinical data available.</p>
-            </div>
-            {% endif %}
-            
-            <!-- Conditional Display for Allele Frequency Data Results with Pagination -->
-            {% if allele_table %}
-            <div id="allele-frequency-data-results">
-                <h2>Allele Frequency Data</h2>
-                {{ allele_table|safe }}
-                <nav aria-label="Page navigation example">
-                    <ul class="pagination">
-                        {% if allele_page > 1 %}
-                            <li class="page-item"><a class="page-link" href="{{ url_for('results', allele_page=allele_page-1, genotype_page=genotype_page) }}">Previous</a></li>
-                        {% endif %}
-                        {% if more_rows_allele %}
-                            <li class="page-item"><a class="page-link" href="{{ url_for('results', allele_page=allele_page+1, genotype_page=genotype_page) }}">Next</a></li>
-                        {% endif %}
-                    </ul>
-                </nav>
-            </div>
-            {% endif %}
+                    <!-- Display ADMIXTURE Results if available -->
+                    {% if adm_image %}
+                        <div id="admixture-results">
+                            <h2>ADMIXTURE Results</h2>
+                            <img src="{{ url_for('static', filename='images/' + adm_image) }}" alt="ADMIXTURE Results" style="max-width: 100%;">
+                        </div>
+                    {% endif %}
+                {% elif query_type == 'snp_analysis' %}
+                    <!-- Display FST Results if available -->
+                    {% if fst_image %}
+                        <div id="fst-results">
+                            <h2>FST Results</h2>
+                            <img src="{{ url_for('static', filename='images/' + fst_image) }}" alt="FST Results" style="max-width: 100%;">
+                            {% if fst_matrix_exists %}
+                                <a href="/static/txt_files/Fst_matrix.txt" download="Fst_matrix.txt" class="btn btn-primary">Download FST Matrix</a>
+                            {% endif %}
+                        </div>
+                    {% endif %}
 
-            <!-- Conditional Display for Genotype Frequency Data Results with Pagination -->
-            {% if genotype_table %}
-            <div id="genotype-frequency-data-results">
-                <h2>Genotype Frequency Data</h2>
-                {{ genotype_table|safe }}
-                <nav aria-label="Page navigation example">
-                    <ul class="pagination">
-                        {% if genotype_page > 1 %}
-                            <li class="page-item"><a class="page-link" href="{{ url_for('results', allele_page=allele_page, genotype_page=genotype_page-1) }}">Previous</a></li>
-                        {% endif %}
-                        {% if more_rows_genotype %}
-                            <li class="page-item"><a class="page-link" href="{{ url_for('results', allele_page=allele_page, genotype_page=genotype_page+1) }}">Next</a></li>
-                        {% endif %}
-                    </ul>
-                </nav>
-            </div>
-            {% endif %}
+                    <!-- Conditional Display for Clinical Data Results with Pagination -->
+                    {% if clinical_table %}
+                    <div id="clinical-data-results">
+                        <h2>Clinical Data</h2>
+                        {{ clinical_table|safe }}
+                        <nav aria-label="Page navigation example">
+                            <ul class="pagination">
+                                {% if clinical_page > 1 %}
+                                    <li class="page-item"><a class="page-link" href="{{ url_for('results', clinical_page=clinical_page-1, allele_page=allele_page, genotype_page=genotype_page) }}">Previous</a></li>
+                                {% endif %}
+                                {% if more_rows_clinical %}
+                                    <li class="page-item"><a class="page-link" href="{{ url_for('results', clinical_page=clinical_page+1, allele_page=allele_page, genotype_page=genotype_page) }}">Next</a></li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                    </div>
+                    {% else %}
+                    <div id="no-clinical-data">
+                        <p>No clinical data available.</p>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Conditional Display for Allele Frequency Data Results with Pagination -->
+                    {% if allele_table %}
+                    <div id="allele-frequency-data-results">
+                        <h2>Allele Frequency Data</h2>
+                        {{ allele_table|safe }}
+                        <nav aria-label="Page navigation example">
+                            <ul class="pagination">
+                                {% if allele_page > 1 %}
+                                    <li class="page-item"><a class="page-link" href="{{ url_for('results', allele_page=allele_page-1, genotype_page=genotype_page) }}">Previous</a></li>
+                                {% endif %}
+                                {% if more_rows_allele %}
+                                    <li class="page-item"><a class="page-link" href="{{ url_for('results', allele_page=allele_page+1, genotype_page=genotype_page) }}">Next</a></li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                    </div>
+                    {% endif %}
+
+                    <!-- Conditional Display for Genotype Frequency Data Results with Pagination -->
+                    {% if genotype_table %}
+                    <div id="genotype-frequency-data-results">
+                        <h2>Genotype Frequency Data</h2>
+                        {{ genotype_table|safe }}
+                        <nav aria-label="Page navigation example">
+                            <ul class="pagination">
+                                {% if genotype_page > 1 %}
+                                    <li class="page-item"><a class="page-link" href="{{ url_for('results', allele_page=allele_page, genotype_page=genotype_page-1) }}">Previous</a></li>
+                                {% endif %}
+                                {% if more_rows_genotype %}
+                                    <li class="page-item"><a class="page-link" href="{{ url_for('results', allele_page=allele_page, genotype_page=genotype_page+1) }}">Next</a></li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                    </div>
+                    {% endif %}
+                {% endif %}
         </div>
     {% else %}
         <p>No query has been submitted.</p>
