@@ -99,11 +99,34 @@
                 radio.addEventListener('change', updateQueryTypeDisplay);
             });
     
+            // Add event listener for form submission to perform validation
+            document.querySelector('form').addEventListener('submit', function(event) {
+                const queryTypeValue = document.querySelector('input[name="query_type"]:checked')?.value;
+                let isValid = true; // Assume form is valid
+
+                // Perform validation based on query type
+                if (queryTypeValue === 'snp' && !document.getElementById('snp_ids').querySelector('textarea').value.trim()) {
+                    isValid = false;
+                } else if (queryTypeValue === 'region' && 
+                    (!document.getElementById('genomic_start').value.trim() || 
+                    !document.getElementById('genomic_end').value.trim())) {
+                    isValid = false;
+                } else if (queryTypeValue === 'gene' && 
+                    !document.getElementById('gene_names').querySelector('input').value.trim()) {
+                    isValid = false;
+                }
+
+
+                // If not valid, prevent form submission and alert the user
+                if (!isValid) {
+                    event.preventDefault(); // Prevent form submission
+                    alert('Please fill in all required fields for the selected query type.');
+                }
+            });
+
             // Initial display update
             updateQueryTypeDisplay();
         });
     </script>
     
-
-
 {% endblock %}
