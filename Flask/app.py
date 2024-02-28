@@ -195,6 +195,7 @@ def analysis():
                 os.remove(file_path)
 
         selected_populations = request.form.getlist('populations')
+        session['selected_populations_count'] = len(selected_populations)
         selected_SNPid = request.form.get('snp_ids')
         selected_gene = request.form.get('gene_names')
         selected_genomic_start= request.form.get('genomic_start')
