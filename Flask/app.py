@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, render_template, request, redirect, url_for, session
+from flask import Flask, render_template, request, redirect, url_for, session, flash
 from flask_wtf import FlaskForm
 from matplotlib import pyplot as plt
 import numpy as np
@@ -6,16 +6,14 @@ from wtforms import SelectMultipleField, SubmitField, StringField, TextAreaField
 from wtforms.validators import Optional, DataRequired
 import helper
 from database import setup, close
-from pandas.plotting import table
+import pandas as pd
 import os
-
 # Initialise the Flask application & set secret key for CSRF protection
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'sdfgklhjersjio49430-9534-5'
 
 # Setup DB connection
 cursor, connection = setup()
-
 
 # Define form for SNP analysis queries
 class SNPAnalysisForm(FlaskForm):
@@ -69,9 +67,9 @@ class SNPAnalysisForm(FlaskForm):
     gene_names = StringField('Gene Names (comma-separated)', validators=[Optional()])
 
 
-    genomic_start = StringField('Genomic Start Position:', validators=[Optional()])
-    genomic_end = StringField('Genomic End Position:', validators=[Optional()])
-
+    genomic_start = StringField('Genomic Start Position:', id='genomic_start', validators=[Optional()])
+    genomic_end = StringField('Genomic End Position:', id='genomic_end', validators=[Optional()])
+    
     # Submit button for the form
     submit = SubmitField('Submit Query')
 
@@ -128,6 +126,17 @@ class PopulationAnalysisForm(FlaskForm):
 def population_analysis():
     form = PopulationAnalysisForm()
     if form.validate_on_submit():
+        # Custom validation based on the selected analysis scope
+        analysis_scope = request.form.get('Pop_scope')
+        selected_superpopulations = request.form.getlist('Pop_superpopulations')
+        selected_populations = request.form.getlist('Pop_populations')
+
+        if analysis_scope == 'superpopulation' and not selected_superpopulations:
+            flash('Please select at least one superpopulation.', 'error')
+            return render_template('population_analysis.html', form=form)
+        elif analysis_scope == 'population' and not selected_populations:
+            flash('Please select at least one population.', 'error')
+            return render_template('population_analysis.html', form=form)
         # Retrieve selected populations and superpopulations from form
         SelPop_populations = request.form.getlist('Pop_populations')
         SelPop_superpopulations = request.form.getlist('Pop_superpopulations')
@@ -160,38 +169,11 @@ def population_analysis():
             admixture_plot_filename = helper.plot_adm(data1, 'superpopulation_code', SelPop_populations, admixture_plot_filename) 
         session['pca_image'] = pca_plot_filename
         session['adm_image'] = admixture_plot_filename
+        session['query_submitted'] = True
+        session['query_type'] = 'population_analysis'
         return redirect(url_for('results'))
         # return render_template('results.html', pca_image=pca_plot_filename, adm_image = admixture_plot_filename)
     return render_template('population_analysis.html', form=form)
-
-class Suggestion:
-    # Class variable to specify the table name in the database
-    VARIANT = 'suggestions'  # Replace with your actual table name
-
-    # Constructor to initialize suggestion attributes
-    def __init__(self, pos, snpId, geneName):
-        self.pos = pos
-        self.snpId = snpId
-        self.geneName = geneName
-
-    # String representation of the class instance for debugging and logging
-    def __repr__(self):
-        return f'<Suggestion {self.snpId} - {self.geneName}>'
-
-@app.route('/suggest', methods=['GET'])
-def suggest():
-    # Retrieve the 'text' parameter from the query string, default to an empty string if not provided
-    input_text = request.args.get('text', '')
-    if input_text:
-        # Assuming you have a 'suggestions' table with columns 'position', 'snpId', and 'geneName'
-        # Execute a SQL query to fetch suggestions based on the input text
-        cursor.execute(f"SELECT pos, snpId, geneName FROM {Suggestion.VARIANT} WHERE snpId or pos or geneName ILIKE %s", (f"{input_text}%",))
-        query_results = cursor.fetchall()
-        suggestions = [Suggestion(*result) for result in query_results]
-    else:
-        suggestions = []
-
-    return jsonify([repr(suggestion) for suggestion in suggestions])
 
 # Route for handling SNP analysis form
 @app.route('/analysis', methods=['GET', 'POST'])
@@ -200,7 +182,16 @@ def analysis():
     print("SNP FORM DISPLAY")
     if form.validate_on_submit():
     # Form data processing to be completed, for now it prints input and redirects to results
-    
+        # Paths to the CSV files
+        clinical_data_path = '/Users/karch/Desktop/QMUL/git/Group_project_repo/Flask/static/txt_files/Clinical_data.txt'
+        allele_frequency_data_path = '/Users/karch/Desktop/QMUL/git/Group_project_repo/Flask/static/txt_files/allel_frequency_data.txt'
+        genotype_frequency_data_path = '/Users/karch/Desktop/QMUL/git/Group_project_repo/Flask/static/txt_files/Genotype_frequency_data.txt'
+        
+        # Delete existing files if they exist before processing a new query
+        for file_path in [clinical_data_path, allele_frequency_data_path, genotype_frequency_data_path]:
+            if os.path.exists(file_path):
+                os.remove(file_path)
+
         selected_populations = request.form.getlist('populations')
         selected_SNPid = request.form.get('snp_ids')
         selected_gene = request.form.get('gene_names')
@@ -221,8 +212,10 @@ def analysis():
             if not data2.empty:
                 # Specify the file path
                 file_path = '/Users/karch/Desktop/QMUL/git/Group_project_repo/Flask/static/txt_files/'+'Clinical_data.txt'
+
                 # Save DataFrame to a text file
                 data2.to_csv(file_path, sep=',', index=False)
+
                 print(f"DataFrame saved as text file: {file_path}")
         else:
                 print("DataFrame is empty. Skipping table image creation.")
@@ -273,8 +266,8 @@ def analysis():
                 for j in range(len(pop_names)):
                     plt.text(j, i, format(Fst_matrix[i, j], '.2f'),
                             ha="center", va="center", color="purple")
-            plt.xticks(np.arange(len(pop_names)), pop_names)
-            plt.yticks(np.arange(len(pop_names)), pop_names)
+            plt.xticks(np.arange(len(pop_names)), pop_names,rotation=45)
+            plt.yticks(np.arange(len(pop_names)), pop_names,rotation=45)
             plt.xlabel('Populations')
             plt.ylabel('Populations')
             plt.tight_layout()
@@ -293,6 +286,7 @@ def analysis():
         if not data4.empty:
                 # Specify the file path
                 file_path = '/Users/karch/Desktop/QMUL/git/Group_project_repo/Flask/static/txt_files/'+'Genotype_frequency_data.txt'
+
                 # Save DataFrame to a text file
                 data4.to_csv(file_path, sep=',', index=False)
 
@@ -306,27 +300,74 @@ def analysis():
         
         """
         session['fst_image'] = fst_plot_filename
+        session['query_submitted'] = True
+        session['query_type'] = 'snp_analysis'
         return redirect(url_for('results'))
     return render_template('analysis.html', form=form)
 
-
+# Route for home page
 @app.route('/')
 def home():
+    session.clear()
     return render_template('home.html')
 
-# Route for the home page
+# Route for the results page
 @app.route('/results')
 def results():
     # Retrieve filenames from session if they exist; else, use None
     pca_image = session.get('pca_image', None)
     adm_image = session.get('adm_image', None)
     fst_image = session.get('fst_image', None)
-    return render_template('results.html', pca_image=pca_image, adm_image=adm_image, fst_image=fst_image)
+    fst_matrix_path = os.path.join(app.root_path, 'static', 'txt_files', 'Fst_matrix.txt')
+    fst_matrix_exists = os.path.isfile(fst_matrix_path)
 
+
+
+    # Initialize variables outside the conditional blocks
+    allele_page = request.args.get('allele_page', 1, type=int)
+    genotype_page = request.args.get('genotype_page', 1, type=int)
+    clinical_page = request.args.get('clinical_page', 1, type=int)
+    more_rows_allele = False
+    more_rows_genotype = False
+    more_rows_clinical = False
+    allele_html = None
+    genotype_html = None
+    clinical_html = None
+
+    # Initialize rows per page
+    rows_per_page = 10
+
+    # Clinical Data
+    clinical_data_path = '/Users/karch/Desktop/QMUL/git/Group_project_repo/Flask/static/txt_files/Clinical_data.txt'
+    if os.path.exists(clinical_data_path):
+        clinical_skip = (clinical_page - 1) * rows_per_page
+        clinical_df = pd.read_csv(clinical_data_path, skiprows=range(1, clinical_skip + 1), nrows=rows_per_page)
+        clinical_html = clinical_df.to_html(classes='table table-striped', index=False)
+        next_page_clinical_df = pd.read_csv(clinical_data_path, skiprows=range(1, clinical_skip + rows_per_page + 1), nrows=1)
+        more_rows_clinical = not next_page_clinical_df.empty
+
+    # Allele Frequency Data
+    allele_data_path = '/Users/karch/Desktop/QMUL/git/Group_project_repo/Flask/static/txt_files/allel_frequency_data.txt'
+    if os.path.exists(allele_data_path):
+        allele_skip = (allele_page - 1) * rows_per_page
+        allele_df = pd.read_csv(allele_data_path, skiprows=range(1, allele_skip + 1), nrows=rows_per_page)
+        allele_html = allele_df.to_html(classes='table table-striped', index=False)
+        next_page_allele_df = pd.read_csv(allele_data_path, skiprows=range(1, allele_skip + rows_per_page + 1), nrows=1)
+        more_rows_allele = not next_page_allele_df.empty
+
+    # Genotype Frequency Data
+    genotype_data_path = '/Users/karch/Desktop/QMUL/git/Group_project_repo/Flask/static/txt_files/Genotype_frequency_data.txt'
+    if os.path.exists(genotype_data_path):
+        genotype_skip = (genotype_page - 1) * rows_per_page
+        genotype_df = pd.read_csv(genotype_data_path, skiprows=range(1, genotype_skip + 1), nrows=rows_per_page)
+        genotype_html = genotype_df.to_html(classes='table table-striped', index=False)
+        next_page_genotype_df = pd.read_csv(genotype_data_path, skiprows=range(1, genotype_skip + rows_per_page + 1), nrows=1)
+        more_rows_genotype = not next_page_genotype_df.empty
+    query_submitted = session.get('query_submitted', False)
+    query_type = session.get('query_type', None)
+    return render_template('results.html', query_submitted=query_submitted, query_type=query_type, pca_image=pca_image, adm_image=adm_image, fst_image=fst_image, fst_matrix_exists=fst_matrix_exists, clinical_table=clinical_html, clinical_page=clinical_page, more_rows_clinical=more_rows_clinical, allele_table=allele_html, allele_page=allele_page, more_rows_allele=more_rows_allele, genotype_table=genotype_html, genotype_page=genotype_page, more_rows_genotype=more_rows_genotype)
 
 if __name__ == '__main__':
     app.run(debug=True)
 
 close(cursor, connection)
-
-    
