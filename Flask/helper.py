@@ -313,6 +313,17 @@ def get_genotype_frequency(selected_SNPid, selected_gene, selected_genomic_start
 
     data4= pd.read_sql_query(genotype_query, connection, params=value4)
 
+    for pop in selected_populations:
+        # Calculate frequencies from the genotypic counts given and replace existing columns
+        hom_alt_freq = (data4[f'{pop.lower()}_hom_alt'] / data4[[f'{pop.lower()}_hom_alt', f'{pop.lower()}_het', f'{pop.lower()}_hom_ref']].sum(axis=1)) * 100
+        het_freq = (data4[f'{pop.lower()}_het'] / data4[[f'{pop.lower()}_hom_alt', f'{pop.lower()}_het', f'{pop.lower()}_hom_ref']].sum(axis=1)) * 100
+        hom_ref_freq = (data4[f'{pop.lower()}_hom_ref'] / data4[[f'{pop.lower()}_hom_alt', f'{pop.lower()}_het', f'{pop.lower()}_hom_ref']].sum(axis=1)) * 100
+
+        # Update existing columns with new frequencies
+        data4[f'{pop.lower()}_hom_alt'] = hom_alt_freq
+        data4[f'{pop.lower()}_het'] = het_freq
+        data4[f'{pop.lower()}_hom_ref'] = hom_ref_freq
+
     return data4
 
 def calculate_fst(data, pop_names):
