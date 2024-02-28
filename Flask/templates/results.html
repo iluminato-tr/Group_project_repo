@@ -34,21 +34,32 @@
             </div>
         {% endif %}
 
-        <!-- Conditional display for Clinical Data Results -->
+        <!-- Conditional Display for Clinical Data Results with Pagination -->
         {% if clinical_table %}
-            <div id="clinical-data-results">
-                <h2>Clinical Data Results</h2>
-                {{ clinical_table|safe }}
-            </div>
+        <div id="clinical-data-results">
+            <h2>Clinical Data</h2>
+            {{ clinical_table|safe }}
+            <nav aria-label="Page navigation example">
+                <ul class="pagination">
+                    {% if clinical_page > 1 %}
+                        <li class="page-item"><a class="page-link" href="{{ url_for('results', clinical_page=clinical_page-1, allele_page=allele_page, genotype_page=genotype_page) }}">Previous</a></li>
+                    {% endif %}
+                    {% if more_rows_clinical %}
+                        <li class="page-item"><a class="page-link" href="{{ url_for('results', clinical_page=clinical_page+1, allele_page=allele_page, genotype_page=genotype_page) }}">Next</a></li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
         {% else %}
-            <div id="no-clinical-data">
-                <p>No clinical data available.</p>
-            </div>
+        <div id="no-clinical-data">
+            <p>No clinical data available.</p>
+        </div>
         {% endif %}
         
-        <!-- Allele Frequency Data Results with Pagination -->
+        <!-- Conditional Display for Allele Frequency Data Results with Pagination -->
+        {% if allele_table %}
         <div id="allele-frequency-data-results">
-            <h2>Allele Frequency Data Results</h2>
+            <h2>Allele Frequency Data</h2>
             {{ allele_table|safe }}
             <nav aria-label="Page navigation example">
                 <ul class="pagination">
@@ -61,10 +72,12 @@
                 </ul>
             </nav>
         </div>
+        {% endif %}
 
-        <!-- Genotype Frequency Data Results with Pagination -->
+        <!-- Conditional Display for Genotype Frequency Data Results with Pagination -->
+        {% if genotype_table %}
         <div id="genotype-frequency-data-results">
-            <h2>Genotype Frequency Data Results</h2>
+            <h2>Genotype Frequency Data</h2>
             {{ genotype_table|safe }}
             <nav aria-label="Page navigation example">
                 <ul class="pagination">
@@ -77,7 +90,7 @@
                 </ul>
             </nav>
         </div>
-    
-    
+        {% endif %}
+            
     </div>
 {% endblock %}
