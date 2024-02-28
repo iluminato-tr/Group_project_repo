@@ -175,9 +175,9 @@ def analysis():
         clinical_data_path = 'S:/Documents/UNIVERSITY/POSTGRADUATE/SLACKWARE/Flask/static/txt_files/Clinical_data.txt'
         allele_frequency_data_path = 'S:/Documents/UNIVERSITY/POSTGRADUATE/SLACKWARE/Flask/static/txt_files/allel_frequency_data.txt'
         genotype_frequency_data_path = 'S:/Documents/UNIVERSITY/POSTGRADUATE/SLACKWARE/Flask/static/txt_files/Genotype_frequency_data.txt'
-        
+        fst_matrix_data_path = 'S:/Documents/UNIVERSITY/POSTGRADUATE/SLACKWARE/Flask/static/txt_files/Fst_matrix.txt'
         # Delete existing files if they exist before processing a new query
-        for file_path in [clinical_data_path, allele_frequency_data_path, genotype_frequency_data_path]:
+        for file_path in [clinical_data_path, allele_frequency_data_path, genotype_frequency_data_path, fst_matrix_data_path]:
             if os.path.exists(file_path):
                 os.remove(file_path)
 
