@@ -41,5 +41,22 @@
                 {{ clinical_table|safe }}
             </div>
         {% endif %}
+        
+        <!-- Allele Frequency Data Results with Pagination -->
+        <div id="allele-frequency-data-results">
+            <h2>Allele Frequency Data Results</h2>
+            {{ allele_table|safe }}
+            <nav aria-label="Page navigation example">
+                <ul class="pagination">
+                    {% if page > 1 %}
+                        <li class="page-item"><a class="page-link" href="{{ url_for('results', page=page-1) }}">Previous</a></li>
+                    {% endif %}
+                    {% if more_rows %}
+                        <li class="page-item"><a class="page-link" href="{{ url_for('results', page=page+1) }}">Next</a></li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+    
     </div>
 {% endblock %}

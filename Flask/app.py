@@ -288,7 +288,8 @@ def home():
 
 # Route for the results page
 @app.route('/results')
-def results():
+@app.route('/results/<int:page>')
+def results(page=1):
     # Retrieve filenames from session if they exist; else, use None
     pca_image = session.get('pca_image', None)
     adm_image = session.get('adm_image', None)
@@ -299,8 +300,19 @@ def results():
     clinical_data_path = 'S:/Documents/UNIVERSITY/POSTGRADUATE/SLACKWARE/Flask/static/txt_files/Clinical_data.txt'
     clinical_df = pd.read_csv(clinical_data_path)
     clinical_html = clinical_df.head(10).to_html(classes='table table-striped', index=False)  # Convert to HTML, limit rows to minimize load time
-    
-    return render_template('results.html', pca_image=pca_image, adm_image=adm_image, fst_image=fst_image, fst_matrix_exists=fst_matrix_exists, clinical_table=clinical_html)
+
+    # Pagination for Allele Frequency Data
+    rows_per_page = 10
+    skip = (page - 1) * rows_per_page
+    allele_data_path = 'S:/Documents/UNIVERSITY/POSTGRADUATE/SLACKWARE/Flask/static/txt_files/allel_frequency_data.txt'
+    allele_df = pd.read_csv(allele_data_path, skiprows=range(1, skip + 1), nrows=rows_per_page)
+    allele_html = allele_df.to_html(classes='table table-striped', index=False)
+
+    # Check if there's a next page
+    next_page_df = pd.read_csv(allele_data_path, skiprows=range(1, skip + rows_per_page + 1), nrows=1)
+    more_rows = not next_page_df.empty
+
+    return render_template('results.html', pca_image=pca_image, adm_image=adm_image, fst_image=fst_image, fst_matrix_exists=fst_matrix_exists, clinical_table=clinical_html, allele_table=allele_html, page=page, more_rows=more_rows )
 
 
 if __name__ == '__main__':
