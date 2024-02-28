@@ -297,6 +297,7 @@ def analysis():
 # Route for home page
 @app.route('/')
 def home():
+    session.clear()
     return render_template('home.html')
 
 # Route for the results page
