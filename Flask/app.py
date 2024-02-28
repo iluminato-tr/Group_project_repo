@@ -275,7 +275,7 @@ def analysis():
             plt.xlabel('Populations')
             plt.ylabel('Populations')
             plt.tight_layout()
-            plt.savefig('C:/Users/andre/OneDrive/Masaüstü/Group_project_repo/Flask/static/images/'+'Fst_heatmap.png')#Change to your path
+            plt.savefig('C:/Users/andre/OneDrive/Masaüstü/Group_project_repo/Flask/static/images/'+'fst_plot.png')#Change to your path
             plt.show()
        
         else: 
