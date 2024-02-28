@@ -5,7 +5,6 @@ import seaborn as sns
 matplotlib.use('Agg') # Set the backend to 'Agg' before importing pyplot
 import matplotlib.pyplot as plt
 
-
 def get_population_data(SelPop_populations, SelPop_superpopulations, connection):
     """
     This method gets population data for pca analysis. 
@@ -20,7 +19,7 @@ def get_population_data(SelPop_populations, SelPop_superpopulations, connection)
         WHERE s.population_code IN (%(val)s); 
         """
         values = ', '.join(["'{}'".format(value) for value in SelPop_populations])
-    else: 
+    elif len(SelPop_superpopulations) > 0: 
         pop_query = """
         SELECT s.sample_id, pc.PC1, pc.PC2, s.population_code, s.superpopulation_code 
         FROM pca as pc
@@ -314,8 +313,77 @@ def get_genotype_frequency(selected_SNPid, selected_gene, selected_genomic_start
     data4= pd.read_sql_query(genotype_query, connection, params=value4)
 
     for pop in selected_populations:
-        data4[f'{pop.lower()}_hom_alt_freq'] = (data4[f'{pop.lower()}_hom_alt'] / data4[[f'{pop.lower()}_hom_alt', f'{pop.lower()}_het', f'{pop.lower()}_hom_ref']].sum(axis=1)) * 100
-        data4[f'{pop.lower()}_het_freq'] = (data4[f'{pop.lower()}_het'] / data4[[f'{pop.lower()}_hom_alt', f'{pop.lower()}_het', f'{pop.lower()}_hom_ref']].sum(axis=1)) * 100
-        data4[f'{pop.lower()}_hom_ref_freq'] = (data4[f'{pop.lower()}_hom_ref'] / data4[[f'{pop.lower()}_hom_alt', f'{pop.lower()}_het', f'{pop.lower()}_hom_ref']].sum(axis=1)) * 100
+        # Calculate frequencies from the genotypic counts given and replace existing columns
+        hom_alt_freq = (data4[f'{pop.lower()}_hom_alt'] / data4[[f'{pop.lower()}_hom_alt', f'{pop.lower()}_het', f'{pop.lower()}_hom_ref']].sum(axis=1)) * 100
+        het_freq = (data4[f'{pop.lower()}_het'] / data4[[f'{pop.lower()}_hom_alt', f'{pop.lower()}_het', f'{pop.lower()}_hom_ref']].sum(axis=1)) * 100
+        hom_ref_freq = (data4[f'{pop.lower()}_hom_ref'] / data4[[f'{pop.lower()}_hom_alt', f'{pop.lower()}_het', f'{pop.lower()}_hom_ref']].sum(axis=1)) * 100
 
+        # Update existing columns with new frequencies
+        data4[f'{pop.lower()}_hom_alt'] = hom_alt_freq
+        data4[f'{pop.lower()}_het'] = het_freq
+        data4[f'{pop.lower()}_hom_ref'] = hom_ref_freq
+    
     return(data4)
+
+def calculate_fst(data, pop_names):
+    # Identify genotype columns
+    genotype_columns = [col for col in data.columns if col.endswith('_ref') or col.endswith('_alt')]
+    allele_counts_df = data[genotype_columns]
+
+    # Replace NoneType values with 0
+    allele_counts_df = allele_counts_df.fillna(0)
+
+    # Compute allele frequencies across populations
+    allele_counts = allele_counts_df.values
+
+    # Calculate sums along rows
+    row_sums = np.sum(allele_counts, axis=1)
+
+    # Avoid division by zero
+    row_sums[row_sums == 0] = 1
+
+    allele_freqs = allele_counts / row_sums[:, np.newaxis]
+
+    # Calculate average allele frequencies across populations
+    avg_allele_freqs = np.mean(allele_freqs, axis=0)
+
+    # Calculate expected heterozygosity within populations (Hs)
+    Hs = 2 * avg_allele_freqs * (1 - avg_allele_freqs)
+
+    # Calculate expected heterozygosity across populations (Ht)
+    Ht = np.sum(Hs)
+
+    # Initialize Fst matrix
+    num_pops = len(pop_names)
+    Fst_matrix = np.zeros((num_pops, num_pops))
+
+    for i, pop1 in enumerate(pop_names):
+        for j, pop2 in enumerate(pop_names):
+            if i > j:  # Calculate Fst only for upper triangular part
+                # Extract allele counts for the two populations
+                pop1_counts = allele_counts_df[[col for col in genotype_columns if pop1 in col]].sum(axis=1)
+                pop2_counts = allele_counts_df[[col for col in genotype_columns if pop2 in col]].sum(axis=1)
+
+                # Convert NoneType values to 0
+                pop1_counts = np.nan_to_num(pop1_counts)
+                pop2_counts = np.nan_to_num(pop2_counts)
+
+                # Avoid division by zero
+                pop1_total = np.sum(pop1_counts)
+                pop2_total = np.sum(pop2_counts)
+                if pop1_total == 0 or pop2_total == 0:
+                    Fst_matrix[i, j] = np.nan
+                    Fst_matrix[j, i] = np.nan
+                    continue
+
+                # Compute allele frequencies
+                allele_freqs_pop1 = pop1_counts / pop1_total
+                allele_freqs_pop2 = pop2_counts / pop2_total
+
+                # Calculate Fst using the Weir and Cockerham method
+                Fst_ij = (Ht - (Hs[i] + Hs[j]) / 2) / Ht
+
+                Fst_matrix[i, j] = Fst_ij
+                Fst_matrix[j, i] = Fst_ij  # Assign to the symmetric position as well
+
+    return Fst_matrix
