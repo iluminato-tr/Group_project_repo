@@ -1,9 +1,13 @@
-from flask import Flask, render_template, request, redirect, url_for, session
+from flask import Flask, jsonify, render_template, request, redirect, url_for, session
 from flask_wtf import FlaskForm
+from matplotlib import pyplot as plt
+import numpy as np
 from wtforms import SelectMultipleField, SubmitField, StringField, TextAreaField, RadioField
 from wtforms.validators import Optional, DataRequired
 import helper
 from database import setup, close
+from pandas.plotting import table
+import os
 
 # Initialise the Flask application & set secret key for CSRF protection
 app = Flask(__name__)
@@ -11,6 +15,7 @@ app.config['SECRET_KEY'] = 'sdfgklhjersjio49430-9534-5'
 
 # Setup DB connection
 cursor, connection = setup()
+
 
 # Define form for SNP analysis queries
 class SNPAnalysisForm(FlaskForm):
@@ -128,6 +133,7 @@ def population_analysis():
         SelPop_superpopulations = request.form.getlist('Pop_superpopulations')
         data = helper.get_population_data(SelPop_populations, SelPop_superpopulations, connection)
         data1 = helper.get_pop_data(SelPop_populations, SelPop_superpopulations, connection)
+        
         """
         call method to do plot pca result
 
@@ -158,6 +164,35 @@ def population_analysis():
         # return render_template('results.html', pca_image=pca_plot_filename, adm_image = admixture_plot_filename)
     return render_template('population_analysis.html', form=form)
 
+class Suggestion:
+    # Class variable to specify the table name in the database
+    VARIANT = 'suggestions'  # Replace with your actual table name
+
+    # Constructor to initialize suggestion attributes
+    def __init__(self, pos, snpId, geneName):
+        self.pos = pos
+        self.snpId = snpId
+        self.geneName = geneName
+
+    # String representation of the class instance for debugging and logging
+    def __repr__(self):
+        return f'<Suggestion {self.snpId} - {self.geneName}>'
+
+@app.route('/suggest', methods=['GET'])
+def suggest():
+    # Retrieve the 'text' parameter from the query string, default to an empty string if not provided
+    input_text = request.args.get('text', '')
+    if input_text:
+        # Assuming you have a 'suggestions' table with columns 'position', 'snpId', and 'geneName'
+        # Execute a SQL query to fetch suggestions based on the input text
+        cursor.execute(f"SELECT pos, snpId, geneName FROM {Suggestion.VARIANT} WHERE snpId or pos or geneName ILIKE %s", (f"{input_text}%",))
+        query_results = cursor.fetchall()
+        suggestions = [Suggestion(*result) for result in query_results]
+    else:
+        suggestions = []
+
+    return jsonify([repr(suggestion) for suggestion in suggestions])
+
 # Route for handling SNP analysis form
 @app.route('/analysis', methods=['GET', 'POST'])
 def analysis():
@@ -171,108 +206,106 @@ def analysis():
         selected_gene = request.form.get('gene_names')
         selected_genomic_start= request.form.get('genomic_start')
         selected_genomic_end=request.form.get('genomic_end')
-
+        
+        if os.path.exists('/Users/karch/Desktop/QMUL/git/Group_project_repo/Flask/static/images/fst_plot.png'):
+            os.remove('/Users/karch/Desktop/QMUL/git/Group_project_repo/Flask/static/images/fst_plot.png')
+        fst_plot_filename = "fst_plot.png"
         """"
         call method to display clinical relevance for gene, snpid and genomic coordinates.
         
         """
-        # Inside your /analysis route
-        data2 = helper.get_clinical_data(selected_SNPid, selected_gene, selected_genomic_start, selected_genomic_end, connection)
 
-        # Initializing an empty list for clinical data to handle cases where no data is found or provided
-        session['clinical_data'] = []
-
-        # The if conditions remain the same to check which data to fetch based on the input
-        if ":" in selected_SNPid or ";" in selected_SNPid or selected_SNPid.startswith("rs"):
-            # If data2 is not empty, convert it to a list of dictionaries and store in session
+        data2= helper.get_clinical_data(selected_SNPid, selected_gene, selected_genomic_start, selected_genomic_end, connection)
+        
+        if (":" in selected_SNPid or ";" in selected_SNPid or selected_SNPid.startswith("rs")) or len(selected_gene)>0 or (len(selected_genomic_start)>0 and len(selected_genomic_end)>0):
             if not data2.empty:
-                print("before ssetting", session.get('clinical_data'))
-                session['clinical_data'] = data2.to_dict('records')
-                print("after setiing", session["clinical_data"])
-            else:
-                print('No clinical data found for the SNP ID')
-        elif len(selected_gene) > 0:
-            if not data2.empty:
-                print("before ssetting", session.get('clinical_data'))
-                session['clinical_data'] = data2.to_dict('records')
-                print("after setiing", session["clinical_data"])
-            else:
-                print('No clinical data found for the gene name')
-        elif len(selected_genomic_start) > 0 and len(selected_genomic_end) > 0:
-            if not data2.empty:
-                print("before ssetting", session.get('clinical_data'))
-                session['clinical_data'] = data2.to_dict('records')
-                print("after setiing", session["clinical_data"])
-            else:
-                print('No clinical data found for the genomic coordinates')
+                # Specify the file path
+                file_path = '/Users/karch/Desktop/QMUL/git/Group_project_repo/Flask/static/txt_files/'+'Clinical_data.txt'
+                # Save DataFrame to a text file
+                data2.to_csv(file_path, sep=',', index=False)
+                print(f"DataFrame saved as text file: {file_path}")
         else:
-            print('Clinical relevance not provided')
+                print("DataFrame is empty. Skipping table image creation.")
+        
 
         """
         call method to display allele frequencies for gene, snpid and genomic coordinates.
         
         """
-        # Inside your /analysis route
-        data3 = helper.get_allele_frequency(selected_SNPid, selected_gene, selected_genomic_start, selected_genomic_end, selected_populations, connection)
+        data3= helper.get_allele_frequency(selected_SNPid, selected_gene, selected_genomic_start, selected_genomic_end, selected_populations, connection)
+        
 
-        # Initializing an empty list for allele frequency data to handle cases where no data is found or provided
-        session['allele_frequency_data'] = []
 
-        # The if conditions remain the same to check which data to fetch based on the input
-        if ":" in selected_SNPid or ";" in selected_SNPid or selected_SNPid.startswith("rs") and len(selected_populations) > 0:
+        if ((":" in selected_SNPid or ";" in selected_SNPid or selected_SNPid.startswith("rs")) or len(selected_gene)>0 or (len(selected_genomic_start)>0 and len(selected_genomic_end)>0)) and len(selected_populations) > 0 :
             if not data3.empty:
-                session['allele_frequency_data'] = data3.to_dict('records')
-                print(data3)
-            else:
-                print('No allele frequency data found for the SNP ID')
-        elif len(selected_gene) > 0 and len(selected_populations) > 0:
-            if not data3.empty:
-                session['allele_frequency_data'] = data3.to_dict('records')
-                print(data3)
-            else:
-                print('No allele frequency data found for the gene name')
-        elif len(selected_genomic_start) > 0 and len(selected_genomic_end) > 0 and len(selected_populations) > 0:
-            if not data3.empty:
-                session['allele_frequency_data'] = data3.to_dict('records')
-                print(data3)
-            else:
-                print('No allele frequency data found for the genomic coordinates')
+                # Specify the file path
+                file_path = '/Users/karch/Desktop/QMUL/git/Group_project_repo/Flask/static/txt_files/'+'allel_frequency_data.txt'
+
+                # Save DataFrame to a text file
+                data3.to_csv(file_path, sep=',', index=False)
+
+                print(f"DataFrame saved as text file: {file_path}")
         else:
-            print('Allele frequency not provided')
+                print("DataFrame is empty. Skipping table image creation.")
+        
+        if ((":" in selected_SNPid or ";" in selected_SNPid or selected_SNPid.startswith("rs")) or len(selected_gene) > 0 or (len(selected_genomic_start) > 0 and len(selected_genomic_end) > 0)) and len(selected_populations) > 1:
+            genotype_columns = [col for col in data3.columns if col.endswith('_ref')]
+            pop_names = []
+            for i in genotype_columns:
+                pop_names.append(i[:3])
+            
+            Fst_matrix = helper.calculate_fst(data3, pop_names)
 
+            # Write Fst matrix to a text file
+            with open('/Users/karch/Desktop/QMUL/git/Group_project_repo/Flask/static/txt_files/'+"Fst_matrix.txt", "w") as f:
+                f.write("Fst matrix:\n")
+                f.write("\t" + "\t".join(pop_names) + "\n")
+                for i in range(len(pop_names)):
+                    f.write(pop_names[i] + "\t" + "\t".join(map(str, Fst_matrix[i])) + "\n")
 
+            # Create heatmap
+            plt.figure(figsize=(8, 6))
+            plt.imshow(Fst_matrix, cmap='hot', interpolation='nearest')
+            plt.colorbar(label='Fst values')
+            plt.title('Fst Matrix')
+            # Annotate heatmap with Fst values
+            for i in range(len(pop_names)):
+                for j in range(len(pop_names)):
+                    plt.text(j, i, format(Fst_matrix[i, j], '.2f'),
+                            ha="center", va="center", color="purple")
+            plt.xticks(np.arange(len(pop_names)), pop_names)
+            plt.yticks(np.arange(len(pop_names)), pop_names)
+            plt.xlabel('Populations')
+            plt.ylabel('Populations')
+            plt.tight_layout()
+            plt.savefig('/Users/karch/Desktop/QMUL/git/Group_project_repo/Flask/static/images/'+'fst_plot.png')
+            plt.close()
+       
+        else: 
+            print('allele frequency not provided')
+        
         """
         call method to display genotypic frequencies for gene, snpid and genomic coordinates.
         
         """
-        # Inside your /analysis route
-        data4 = helper.get_genotype_frequency(selected_SNPid, selected_gene, selected_genomic_start, selected_genomic_end, selected_populations, connection)
+        data4= helper.get_genotype_frequency(selected_SNPid, selected_gene, selected_genomic_start, selected_genomic_end, selected_populations, connection)
 
-        # Initializing an empty list for genotype frequency data to handle cases where no data is found or provided
-        session['genotype_frequency_data'] = []
+        if not data4.empty:
+                # Specify the file path
+                file_path = '/Users/karch/Desktop/QMUL/git/Group_project_repo/Flask/static/txt_files/'+'Genotype_frequency_data.txt'
+                # Save DataFrame to a text file
+                data4.to_csv(file_path, sep=',', index=False)
 
-        # The if conditions remain the same to check which data to fetch based on the input
-        if ":" in selected_SNPid or ";" in selected_SNPid or selected_SNPid.startswith("rs") and len(selected_populations) > 0:
-            if not data4.empty:
-                session['genotype_frequency_data'] = data4.to_dict('records')
-                print(data4)
-            else:
-                print('No genotype frequency data found for the SNP ID')
-        elif len(selected_gene) > 0 and len(selected_populations) > 0:
-            if not data4.empty:
-                session['genotype_frequency_data'] = data4.to_dict('records')
-                print(data4)
-            else:
-                print('No genotype frequency data found for the gene name')
-        elif len(selected_genomic_start) > 0 and len(selected_genomic_end) > 0 and len(selected_populations) > 0:
-            if not data4.empty:
-                session['genotype_frequency_data'] = data4.to_dict('records')
-                print(data4)
-            else:
-                print('No genotype frequency data found for the genomic coordinates')
+                print(f"DataFrame saved as text file: {file_path}")
         else:
-            print('Genotype frequency not provided')
+                print("DataFrame is empty. Skipping table image creation.")
 
+        """
+
+        Call method to display pairwise popualtion matrix and visualise it
+        
+        """
+        session['fst_image'] = fst_plot_filename
         return redirect(url_for('results'))
     return render_template('analysis.html', form=form)
 
@@ -281,28 +314,19 @@ def analysis():
 def home():
     return render_template('home.html')
 
+# Route for the home page
 @app.route('/results')
 def results():
     # Retrieve filenames from session if they exist; else, use None
     pca_image = session.get('pca_image', None)
     adm_image = session.get('adm_image', None)
-    
-    # Retrieve data for tables from session
-    clinical_data = session.get('clinical_data', [])
-    allele_frequency_data = session.get('allele_frequency_data', [])
-    genotype_frequency_data = session.get('genotype_frequency_data', [])
+    fst_image = session.get('fst_image', None)
+    return render_template('results.html', pca_image=pca_image, adm_image=adm_image, fst_image=fst_image)
 
-    # Pass all the data to the template
-    return render_template(
-        'results.html',
-        pca_image=pca_image,
-        adm_image=adm_image,
-        clinical_data=clinical_data,
-        allele_frequency_data=allele_frequency_data,
-        genotype_frequency_data=genotype_frequency_data,
-    )
 
 if __name__ == '__main__':
     app.run(debug=True)
 
 close(cursor, connection)
+
+    
