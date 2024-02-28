@@ -312,7 +312,17 @@ def results(page=1):
     next_page_df = pd.read_csv(allele_data_path, skiprows=range(1, skip + rows_per_page + 1), nrows=1)
     more_rows = not next_page_df.empty
 
-    return render_template('results.html', pca_image=pca_image, adm_image=adm_image, fst_image=fst_image, fst_matrix_exists=fst_matrix_exists, clinical_table=clinical_html, allele_table=allele_html, page=page, more_rows=more_rows )
+    
+    # Pagination for Genotype Frequency Data
+    genotype_data_path = 'S:/Documents/UNIVERSITY/POSTGRADUATE/SLACKWARE/Flask/static/txt_files/Genotype_frequency_data.txt'
+    genotype_df = pd.read_csv(genotype_data_path, skiprows=range(1, skip + 1), nrows=rows_per_page)
+    genotype_html = genotype_df.to_html(classes='table table-striped', index=False)
+
+    # Check if there's a next page for genotype data
+    next_page_genotype_df = pd.read_csv(genotype_data_path, skiprows=range(1, skip + rows_per_page + 1), nrows=1)
+    more_rows_genotype = not next_page_genotype_df.empty
+
+    return render_template('results.html', pca_image=pca_image, adm_image=adm_image, fst_image=fst_image, fst_matrix_exists=fst_matrix_exists, clinical_table=clinical_html, allele_table=allele_html, genotype_table=genotype_html, page=page, more_rows=more_rows, more_rows_genotype=more_rows_genotype )
 
 
 if __name__ == '__main__':
