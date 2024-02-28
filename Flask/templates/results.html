@@ -34,11 +34,15 @@
             </div>
         {% endif %}
 
-        <!-- Placeholder for SNP/Gene/Region Query Results -->
+        <!-- Conditional display for Clinical Data Results -->
         {% if clinical_table %}
             <div id="clinical-data-results">
                 <h2>Clinical Data Results</h2>
                 {{ clinical_table|safe }}
+            </div>
+        {% else %}
+            <div id="no-clinical-data">
+                <p>No clinical data available.</p>
             </div>
         {% endif %}
         
@@ -48,11 +52,11 @@
             {{ allele_table|safe }}
             <nav aria-label="Page navigation example">
                 <ul class="pagination">
-                    {% if page > 1 %}
-                        <li class="page-item"><a class="page-link" href="{{ url_for('results', page=page-1) }}">Previous</a></li>
+                    {% if allele_page > 1 %}
+                        <li class="page-item"><a class="page-link" href="{{ url_for('results', allele_page=allele_page-1, genotype_page=genotype_page) }}">Previous</a></li>
                     {% endif %}
-                    {% if more_rows %}
-                        <li class="page-item"><a class="page-link" href="{{ url_for('results', page=page+1) }}">Next</a></li>
+                    {% if more_rows_allele %}
+                        <li class="page-item"><a class="page-link" href="{{ url_for('results', allele_page=allele_page+1, genotype_page=genotype_page) }}">Next</a></li>
                     {% endif %}
                 </ul>
             </nav>
@@ -64,15 +68,16 @@
             {{ genotype_table|safe }}
             <nav aria-label="Page navigation example">
                 <ul class="pagination">
-                    {% if page > 1 %}
-                        <li class="page-item"><a class="page-link" href="{{ url_for('results', page=page-1) }}">Previous</a></li>
+                    {% if genotype_page > 1 %}
+                        <li class="page-item"><a class="page-link" href="{{ url_for('results', allele_page=allele_page, genotype_page=genotype_page-1) }}">Previous</a></li>
                     {% endif %}
                     {% if more_rows_genotype %}
-                        <li class="page-item"><a class="page-link" href="{{ url_for('results', page=page+1) }}">Next</a></li>
+                        <li class="page-item"><a class="page-link" href="{{ url_for('results', allele_page=allele_page, genotype_page=genotype_page+1) }}">Next</a></li>
                     {% endif %}
                 </ul>
             </nav>
         </div>
+    
     
     </div>
 {% endblock %}

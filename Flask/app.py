@@ -288,8 +288,7 @@ def home():
 
 # Route for the results page
 @app.route('/results')
-@app.route('/results/<int:page>')
-def results(page=1):
+def results():
     # Retrieve filenames from session if they exist; else, use None
     pca_image = session.get('pca_image', None)
     adm_image = session.get('adm_image', None)
@@ -298,31 +297,34 @@ def results(page=1):
     fst_matrix_exists = os.path.isfile(fst_matrix_path)
 
     clinical_data_path = 'S:/Documents/UNIVERSITY/POSTGRADUATE/SLACKWARE/Flask/static/txt_files/Clinical_data.txt'
-    clinical_df = pd.read_csv(clinical_data_path)
-    clinical_html = clinical_df.head(10).to_html(classes='table table-striped', index=False)  # Convert to HTML, limit rows to minimize load time
+    if os.path.exists(clinical_data_path):
+        clinical_df = pd.read_csv(clinical_data_path)
+        clinical_html = clinical_df.head(10).to_html(classes='table table-striped', index=False)
+    else:
+         clinical_html = None
 
-    # Pagination for Allele Frequency Data
+    # Initialize rows per page
     rows_per_page = 10
-    skip = (page - 1) * rows_per_page
+
+    # Get current page for allele data, default is 1
+    allele_page = request.args.get('allele_page', 1, type=int)
+    allele_skip = (allele_page - 1) * rows_per_page
     allele_data_path = 'S:/Documents/UNIVERSITY/POSTGRADUATE/SLACKWARE/Flask/static/txt_files/allel_frequency_data.txt'
-    allele_df = pd.read_csv(allele_data_path, skiprows=range(1, skip + 1), nrows=rows_per_page)
+    allele_df = pd.read_csv(allele_data_path, skiprows=range(1, allele_skip + 1), nrows=rows_per_page)
     allele_html = allele_df.to_html(classes='table table-striped', index=False)
+    next_page_allele_df = pd.read_csv(allele_data_path, skiprows=range(1, allele_skip + rows_per_page + 1), nrows=1)
+    more_rows_allele = not next_page_allele_df.empty
 
-    # Check if there's a next page
-    next_page_df = pd.read_csv(allele_data_path, skiprows=range(1, skip + rows_per_page + 1), nrows=1)
-    more_rows = not next_page_df.empty
-
-    
-    # Pagination for Genotype Frequency Data
+    # Get current page for genotype data, default is 1
+    genotype_page = request.args.get('genotype_page', 1, type=int)
+    genotype_skip = (genotype_page - 1) * rows_per_page
     genotype_data_path = 'S:/Documents/UNIVERSITY/POSTGRADUATE/SLACKWARE/Flask/static/txt_files/Genotype_frequency_data.txt'
-    genotype_df = pd.read_csv(genotype_data_path, skiprows=range(1, skip + 1), nrows=rows_per_page)
+    genotype_df = pd.read_csv(genotype_data_path, skiprows=range(1, genotype_skip + 1), nrows=rows_per_page)
     genotype_html = genotype_df.to_html(classes='table table-striped', index=False)
-
-    # Check if there's a next page for genotype data
-    next_page_genotype_df = pd.read_csv(genotype_data_path, skiprows=range(1, skip + rows_per_page + 1), nrows=1)
+    next_page_genotype_df = pd.read_csv(genotype_data_path, skiprows=range(1, genotype_skip + rows_per_page + 1), nrows=1)
     more_rows_genotype = not next_page_genotype_df.empty
 
-    return render_template('results.html', pca_image=pca_image, adm_image=adm_image, fst_image=fst_image, fst_matrix_exists=fst_matrix_exists, clinical_table=clinical_html, allele_table=allele_html, genotype_table=genotype_html, page=page, more_rows=more_rows, more_rows_genotype=more_rows_genotype )
+    return render_template('results.html', pca_image=pca_image, adm_image=adm_image, fst_image=fst_image, fst_matrix_exists=fst_matrix_exists, clinical_table=clinical_html, allele_table=allele_html, allele_page=allele_page, more_rows_allele=more_rows_allele, genotype_table=genotype_html, genotype_page=genotype_page, more_rows_genotype=more_rows_genotype)
 
 
 if __name__ == '__main__':
