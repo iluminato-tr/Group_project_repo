@@ -6,7 +6,7 @@ from wtforms import SelectMultipleField, SubmitField, StringField, TextAreaField
 from wtforms.validators import Optional, DataRequired
 import helper
 from database import setup, close
-from pandas.plotting import table
+import pandas as pd
 import os
 # Initialise the Flask application & set secret key for CSRF protection
 app = Flask(__name__)
@@ -295,7 +295,12 @@ def results():
     fst_image = session.get('fst_image', None)
     fst_matrix_path = os.path.join(app.root_path, 'static', 'txt_files', 'Fst_matrix.txt')
     fst_matrix_exists = os.path.isfile(fst_matrix_path)
-    return render_template('results.html', pca_image=pca_image, adm_image=adm_image, fst_image=fst_image, fst_matrix_exists=fst_matrix_exists)
+
+    clinical_data_path = 'S:/Documents/UNIVERSITY/POSTGRADUATE/SLACKWARE/Flask/static/txt_files/Clinical_data.txt'
+    clinical_df = pd.read_csv(clinical_data_path)
+    clinical_html = clinical_df.head(10).to_html(classes='table table-striped', index=False)  # Convert to HTML, limit rows to minimize load time
+    
+    return render_template('results.html', pca_image=pca_image, adm_image=adm_image, fst_image=fst_image, fst_matrix_exists=fst_matrix_exists, clinical_table=clinical_html)
 
 
 if __name__ == '__main__':

@@ -35,9 +35,11 @@
         {% endif %}
 
         <!-- Placeholder for SNP/Gene/Region Query Results -->
-        <div id="query-results">
-            <h2>Genetic Query Results</h2>
-            <p>Results for specific SNP, gene, or region queries will be shown here.</p>
-        </div>
+        {% if clinical_table %}
+            <div id="clinical-data-results">
+                <h2>Clinical Data Results</h2>
+                {{ clinical_table|safe }}
+            </div>
+        {% endif %}
     </div>
 {% endblock %}
