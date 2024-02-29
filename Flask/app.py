@@ -123,6 +123,7 @@ class PopulationAnalysisForm(FlaskForm):
     Pop_populations = SelectMultipleField('Select Populations', choices=[(id, name) for group in Pop_choices for id, name in group[1]], validators=[Optional()])
     Pop_submit = SubmitField('Analyse Population')
 
+
 # Route for handling the population analysis form
 @app.route('/population_analysis', methods=['GET', 'POST'])
 def population_analysis():
@@ -199,6 +200,7 @@ def analysis():
             selected_SNPid = selected_SNPid.replace(' ', '')
             selected_gene= selected_gene.replace(' ', '')
 
+
     # Form data processing to be completed, for now it prints input and redirects to results
         """ 
         CHANGE THE PATHS TO THE LOCATIONS ON YOUR MACHINE
@@ -253,7 +255,6 @@ def analysis():
         data3= helper.get_allele_frequency(selected_SNPid, selected_gene, selected_genomic_start, selected_genomic_end, selected_populations, connection)
         
 
-
         if ((":" in selected_SNPid or ";" in selected_SNPid or selected_SNPid.startswith("rs")) or len(selected_gene)>0 or (len(selected_genomic_start)>0 and len(selected_genomic_end)>0)) and len(selected_populations) > 0 :
             if not data3.empty:
                 data3 = data3.sort_values(by='pos')
@@ -267,15 +268,18 @@ def analysis():
         else:
                 print("DataFrame is empty. Skipping table image creation.")
                 session['invalid_input'] = 'invalid'
+                return
 
         
         if ((":" in selected_SNPid or ";" in selected_SNPid or selected_SNPid.startswith("rs")) or len(selected_gene) > 0 or (len(selected_genomic_start) > 0 and len(selected_genomic_end) > 0)) and len(selected_populations) > 1:
+            
             genotype_columns = [col for col in data3.columns if col.endswith('_ref')]
             pop_names = []
             for i in genotype_columns:
                 pop_names.append(i[:3])
             
             Fst_matrix = helper.calculate_fst(data3, pop_names)
+
 
             # Write Fst matrix to a text file
             with open('/Users/karch/Desktop/QMUL/git/Group_project_repo/Flask/static/txt_files/'+"Fst_matrix.txt", "w") as f: #CHANGE PATH
@@ -311,7 +315,7 @@ def analysis():
         """
         data4= helper.get_genotype_frequency(selected_SNPid, selected_gene, selected_genomic_start, selected_genomic_end, selected_populations, connection)
 
-        if not data4.empty:
+        if data4 is not None and not data4.empty:
                 
                 data4 = data4.sort_values(by='pos')
                 # Specify the file path
