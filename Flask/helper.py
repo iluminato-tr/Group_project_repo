@@ -1,7 +1,6 @@
 import pandas as pd
 import numpy as np
 import matplotlib
-#import allel
 import seaborn as sns
 matplotlib.use('Agg') # Set the backend to 'Agg' before importing pyplot
 import matplotlib.pyplot as plt
@@ -30,50 +29,56 @@ def get_population_data(SelPop_populations, SelPop_superpopulations, connection)
         values = ', '.join(["'{}'".format(value) for value in SelPop_superpopulations])
 
     data = pd.read_sql_query((pop_query%{'val':values}), connection)
+    
     return data
 
 def plot_pca(data, column_name, SelPop_populations, filename="pca_plot.png"): # File name for saved plot image
+
     """
-    This method plots a scatter plot for pca results. 
+
+    This method plots a scatter plot for pca results.
+
     """
     unique_values=[]
     data_subset=[]
-    # Get unique values (populations or superpopulations) from the specified column
+   # Get unique values (populations or superpopulations) from the specified column
+
     if len(SelPop_populations) > 0:
         unique_values = data['population_code'].unique()
-    else: 
+    else:
         unique_values = data['superpopulation_code'].unique()
-
-    # Create a color map based on the number of unique values
-    colors = plt.cm.get_cmap('gist_rainbow_r', len(unique_values))
-    
-    # Create a dictionary to map values to colors
-    value_colors = {val: colors(i) for i, val in enumerate(unique_values)}
+    # Define a list of 27 colors
+    colors = ['blue', 'orange', 'green', 'red', 'purple', 'brown', 'pink', 'gray', 'olive', 'cyan',
+              'lime', 'teal', 'lavender', 'maroon', 'navy', 'gold', 'magenta', 'turquoise', 'tan',
+              'salmon', 'yellow', 'indigo', 'lightblue', 'lightgreen', 'darkorange', 'skyblue', 'violet']
 
     # Create a new figure for the PCA plot
     plt.figure(figsize=(10, 8))
+       # Iterate over each value
 
-    # Iterate over each value
-    for val in unique_values:
+    for i, val in enumerate(unique_values):
         if len(SelPop_populations) > 0:
             #filter data for population
             data_subset = data[data['population_code'] == val]
-        else: 
+        else:
             data_subset = data[data['superpopulation_code'] == val]
-
+        # Selecting color from the list of 27 colors
+        color = colors[i % len(colors)]
         # Scatter plot for the current value with specified color and label
-        plt.scatter(data_subset['pc1'], data_subset['pc2'], color=value_colors[val], label=val, s=50)
+        plt.scatter(data_subset['pc1'], data_subset['pc2'], color=color, label=val, s=50)
+
     # Set plot title and axis labels
     plt.title(f'PCA Plot with {column_name.capitalize()}')
     plt.xlabel('Principal Component 1')
-    plt.ylabel('Principal Component 2') 
+    plt.ylabel('Principal Component 2')
 
     # Add a legend with value labels
+
     plt.legend(title=column_name.capitalize(), loc='best')
 
     # Display the plot
 
-    pca_path = 'S:/Documents/UNIVERSITY/POSTGRADUATE/SLACKWARE/Flask/static/images/' # CHANGE PATH TO YOUR PATH
+    pca_path = '/Users/karch/Desktop/QMUL/git/Group_project_repo/Flask/static/images/' # CHANGE PATH TO YOUR PATH
     plt.savefig(pca_path+filename)
     plt.close()
     return filename
@@ -149,13 +154,15 @@ def plot_adm(data1, column_name, SelPop_populations, filename="adm_plot.png"): #
 
     # Show plot
     plt.tight_layout()
-    adm_path= 'S:/Documents/UNIVERSITY/POSTGRADUATE/SLACKWARE/Flask/static/images/' # CHANGE PATH TO YOUR PATH
+    adm_path= '/Users/karch/Desktop/QMUL/git/Group_project_repo/Flask/static/images/' # CHANGE PATH TO YOUR PATH
     plt.savefig(adm_path+filename)
     plt.close()
     return filename
 
 
 def get_clinical_data(selected_SNPid, selected_gene, selected_genomic_start, selected_genomic_end, connection):
+
+
     """
     Retrieves clinical relevance information for a selected SNP ID, gene name, or genomic coordinates.
 
@@ -206,8 +213,6 @@ def get_clinical_data(selected_SNPid, selected_gene, selected_genomic_start, sel
     else:
         # Handle other cases if needed
         print("Clinical relevance not provided")
-
-    print(snpclinical_query)
 
     data2 = pd.read_sql_query(snpclinical_query, connection, params=value2)
 
@@ -313,6 +318,17 @@ def get_genotype_frequency(selected_SNPid, selected_gene, selected_genomic_start
 
     data4= pd.read_sql_query(genotype_query, connection, params=value4)
 
+    for pop in selected_populations:
+        # Calculate frequencies from the genotypic counts given and replace existing columns
+        hom_alt_freq = (data4[f'{pop.lower()}_hom_alt'] / data4[[f'{pop.lower()}_hom_alt', f'{pop.lower()}_het', f'{pop.lower()}_hom_ref']].sum(axis=1)) * 100
+        het_freq = (data4[f'{pop.lower()}_het'] / data4[[f'{pop.lower()}_hom_alt', f'{pop.lower()}_het', f'{pop.lower()}_hom_ref']].sum(axis=1)) * 100
+        hom_ref_freq = (data4[f'{pop.lower()}_hom_ref'] / data4[[f'{pop.lower()}_hom_alt', f'{pop.lower()}_het', f'{pop.lower()}_hom_ref']].sum(axis=1)) * 100
+
+        # Update existing columns with new frequencies
+        data4[f'{pop.lower()}_hom_alt'] = hom_alt_freq
+        data4[f'{pop.lower()}_het'] = het_freq
+        data4[f'{pop.lower()}_hom_ref'] = hom_ref_freq
+
     return data4
 
 def calculate_fst(data, pop_names):
@@ -377,3 +393,5 @@ def calculate_fst(data, pop_names):
                 Fst_matrix[j, i] = Fst_ij  # Assign to the symmetric position as well
 
     return Fst_matrix
+
+

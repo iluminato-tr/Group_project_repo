@@ -15,8 +15,6 @@
             <small class="form-text text-muted">Hold Ctrl (or Command on Mac) / Click and drag to select multiple populations.</small>
         </div>
         
-        
-
 
         <!-- Selection for choosing the type of SNP analysis query -->
         <div class="form-group">
@@ -49,7 +47,6 @@
             {{ form.gene_names.label }}
             {{ form.gene_names(class="form-control") }}
         </div>
-
 
         <!-- Submit button -->
         <div class="form-group">
@@ -127,6 +124,8 @@
             // Initial display update
             updateQueryTypeDisplay();
         });
+
+            
     </script>
     
 {% endblock %}

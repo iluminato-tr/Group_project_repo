@@ -6,7 +6,7 @@
     <h1>Analysis Results</h1>
     {% if query_submitted %}
         <div class="results-content">
-                {% if query_type == 'population_analysis' %}
+                {% if query_type == 'population_analysis' and invalid_input != 'valid' %}
                     <!-- Display PCA Results if available -->
                     {% if pca_image %}
                         <div id="pca-results">
@@ -24,7 +24,8 @@
                             <img src="{{ url_for('static', filename='images/' + adm_image) }}" alt="ADMIXTURE Results" style="max-width: 100%;">
                         </div>
                     {% endif %}
-                {% elif query_type == 'snp_analysis' %}
+                {% elif query_type == 'snp_analysis' and invalid_input == 'valid' %}
+                    
                     <!-- Display FST Results if available -->
                     {% if fst_image and session.selected_populations_count > 1 %}
                         <div id="fst-results">
@@ -95,6 +96,8 @@
                         </nav>
                     </div>
                     {% endif %}
+                {% elif invalid_input == 'invalid' %}
+                    <p>Invalid input</p>
                 {% endif %}
         </div>
     {% else %}

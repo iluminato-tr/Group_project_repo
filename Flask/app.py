@@ -2,12 +2,13 @@ from flask import Flask, render_template, request, redirect, url_for, session, f
 from flask_wtf import FlaskForm
 from matplotlib import pyplot as plt
 import numpy as np
-from wtforms import SelectMultipleField, SubmitField, StringField, TextAreaField, RadioField
-from wtforms.validators import Optional, DataRequired
+from wtforms import SelectMultipleField, SubmitField, StringField, TextAreaField, RadioField, IntegerField
+from wtforms.validators import Optional, DataRequired, NumberRange
 import helper
 from database import setup, close
 import pandas as pd
 import os
+
 # Initialise the Flask application & set secret key for CSRF protection
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'sdfgklhjersjio49430-9534-5'
@@ -62,13 +63,13 @@ class SNPAnalysisForm(FlaskForm):
     query_type = RadioField('Query Type', choices=[('snp', 'SNP IDs'), ('gene', 'Gene Names'), ('region', 'Genomic Coordinates')], validators=[DataRequired()])
 
     # Fields for entering relevant query types
-    snp_ids = TextAreaField('SNP IDs (comma-separated)', validators=[Optional()])
+    snp_ids = TextAreaField('SNP IDs (E.g. 1:956105:C:T or rs2274976;1:11790870:C:T or rs2274976 )', validators=[Optional()])
     #genomic_coords = StringField('Genomic Coordinates (Format: chromosome:start-end)', validators=[Optional()])
-    gene_names = StringField('Gene Names (comma-separated)', validators=[Optional()])
+    gene_names = StringField('Gene Names (E.g. CCNL2 or AGRN or NOC2L)', validators=[Optional()])
 
 
-    genomic_start = StringField('Genomic Start Position:', id='genomic_start', validators=[Optional()])
-    genomic_end = StringField('Genomic End Position:', id='genomic_end', validators=[Optional()])
+    genomic_start = IntegerField('Genomic Start Position (min: 10397 and max: 248945650):', id='genomic_start', validators=[Optional(), NumberRange(min= 10397,max= 248945650,message='position outside of range')])
+    genomic_end = IntegerField('Genomic End Position (min: 10397 and max: 248945650):', id='genomic_end', validators=[Optional(), NumberRange(min= 10397,max= 248945650,message='position outside of range')])
 
 
     # Submit button for the form
@@ -127,6 +128,7 @@ class PopulationAnalysisForm(FlaskForm):
 def population_analysis():
     form = PopulationAnalysisForm()
     if form.validate_on_submit():
+        session.clear()
         # Custom validation based on the selected analysis scope
         analysis_scope = request.form.get('Pop_scope')
         selected_superpopulations = request.form.getlist('Pop_superpopulations')
@@ -154,10 +156,10 @@ def population_analysis():
         admixture_plot_filename = "adm_plot.png"
 
         if len(SelPop_populations) > 0:
-            pca_plot_filename = helper.plot_pca(data, 'population_code', SelPop_populations, pca_plot_filename)
+            pca_plot_filename = helper.plot_pca(data, 'population', SelPop_populations, pca_plot_filename)
         else:
             # Plot based on superpopulations (P2)
-            pca_plot_filename = helper.plot_pca(data, 'superpopulation_code', SelPop_populations, pca_plot_filename) 
+            pca_plot_filename = helper.plot_pca(data, 'superpopulation', SelPop_populations, pca_plot_filename) 
         
         """
         call method to plot admixture result
@@ -165,10 +167,10 @@ def population_analysis():
         """
 
         if len(SelPop_populations) > 0:
-            admixture_plot_filename = helper.plot_adm(data1, 'population_code', SelPop_populations, admixture_plot_filename) 
+            admixture_plot_filename = helper.plot_adm(data1, 'population', SelPop_populations, admixture_plot_filename) 
         else:
             # Plot based on superpopulations (P2)
-            admixture_plot_filename = helper.plot_adm(data1, 'superpopulation_code', SelPop_populations, admixture_plot_filename) 
+            admixture_plot_filename = helper.plot_adm(data1, 'superpopulation', SelPop_populations, admixture_plot_filename) 
         session['pca_image'] = pca_plot_filename
         session['adm_image'] = admixture_plot_filename
         session['query_submitted'] = True
@@ -177,18 +179,36 @@ def population_analysis():
         # return render_template('results.html', pca_image=pca_plot_filename, adm_image = admixture_plot_filename)
     return render_template('population_analysis.html', form=form)
 
+
 # Route for handling SNP analysis form
 @app.route('/analysis', methods=['GET', 'POST'])
+    
 def analysis():
     form = SNPAnalysisForm()
     print("SNP FORM DISPLAY")
     if form.validate_on_submit():
+        session.clear()
+        if request.method == 'POST':
+        # Get the user input from the form
+            selected_SNPid = request.form.get('snp_ids')
+            selected_gene = request.form.get('gene_names')
+
+        # Check if user_input is not None before further processing
+        if selected_SNPid is not None and selected_gene is not None:
+            # Remove spaces from the user input
+            selected_SNPid = selected_SNPid.replace(' ', '')
+            selected_gene= selected_gene.replace(' ', '')
+
     # Form data processing to be completed, for now it prints input and redirects to results
+        """ 
+        CHANGE THE PATHS TO THE LOCATIONS ON YOUR MACHINE
+
+        """
         # Paths to the CSV files
-        clinical_data_path = 'S:/Documents/UNIVERSITY/POSTGRADUATE/SLACKWARE/Flask/static/txt_files/Clinical_data.txt'
-        allele_frequency_data_path = 'S:/Documents/UNIVERSITY/POSTGRADUATE/SLACKWARE/Flask/static/txt_files/allel_frequency_data.txt'
-        genotype_frequency_data_path = 'S:/Documents/UNIVERSITY/POSTGRADUATE/SLACKWARE/Flask/static/txt_files/Genotype_frequency_data.txt'
-        fst_matrix_data_path = 'S:/Documents/UNIVERSITY/POSTGRADUATE/SLACKWARE/Flask/static/txt_files/Fst_matrix.txt'
+        clinical_data_path = '/Users/karch/Desktop/QMUL/git/Group_project_repo/Flask/static/txt_files/Clinical_data.txt'
+        allele_frequency_data_path = '/Users/karch/Desktop/QMUL/git/Group_project_repo/Flask/static/txt_files/allel_frequency_data.txt'
+        genotype_frequency_data_path = '/Users/karch/Desktop/QMUL/git/Group_project_repo/Flask/static/txt_files/Genotype_frequency_data.txt'
+        fst_matrix_data_path = '/Users/karch/Desktop/QMUL/git/Group_project_repo/Flask/static/txt_files/Fst_matrix.txt'
         # Delete existing files if they exist before processing a new query
         for file_path in [clinical_data_path, allele_frequency_data_path, genotype_frequency_data_path, fst_matrix_data_path]:
             if os.path.exists(file_path):
@@ -196,13 +216,11 @@ def analysis():
 
         selected_populations = request.form.getlist('populations')
         session['selected_populations_count'] = len(selected_populations)
-        selected_SNPid = request.form.get('snp_ids')
-        selected_gene = request.form.get('gene_names')
         selected_genomic_start= request.form.get('genomic_start')
         selected_genomic_end=request.form.get('genomic_end')
         
-        if os.path.exists('S:/Documents/UNIVERSITY/POSTGRADUATE/SLACKWARE/Flask/static/images/fst_plot.png'):
-            os.remove('S:/Documents/UNIVERSITY/POSTGRADUATE/SLACKWARE/Flask/static/images/fst_plot.png')
+        if os.path.exists('/Users/karch/Desktop/QMUL/git/Group_project_repo/Flask/static/images/fst_plot.png'): #CHANGE PATH
+            os.remove('/Users/karch/Desktop/QMUL/git/Group_project_repo/Flask/static/images/fst_plot.png') #CHANGE PATH
         fst_plot_filename = "fst_plot.png"
         """"
         call method to display clinical relevance for gene, snpid and genomic coordinates.
@@ -213,15 +231,19 @@ def analysis():
         
         if (":" in selected_SNPid or ";" in selected_SNPid or selected_SNPid.startswith("rs")) or len(selected_gene)>0 or (len(selected_genomic_start)>0 and len(selected_genomic_end)>0):
             if not data2.empty:
+
+                data2 = data2.sort_values(by='pos')
                 # Specify the file path
-                file_path = 'S:/Documents/UNIVERSITY/POSTGRADUATE/SLACKWARE/Flask/static/txt_files/'+'Clinical_data.txt'
+                file_path = '/Users/karch/Desktop/QMUL/git/Group_project_repo/Flask/static/txt_files/'+'Clinical_data.txt' #CHANGE PATH
 
                 # Save DataFrame to a text file
                 data2.to_csv(file_path, sep=',', index=False)
 
+                session['invalid_input'] = 'valid'
                 print(f"DataFrame saved as text file: {file_path}")
         else:
                 print("DataFrame is empty. Skipping table image creation.")
+                session['invalid_input'] = 'invalid'
         
 
         """
@@ -234,15 +256,18 @@ def analysis():
 
         if ((":" in selected_SNPid or ";" in selected_SNPid or selected_SNPid.startswith("rs")) or len(selected_gene)>0 or (len(selected_genomic_start)>0 and len(selected_genomic_end)>0)) and len(selected_populations) > 0 :
             if not data3.empty:
+                data3 = data3.sort_values(by='pos')
                 # Specify the file path
-                file_path = 'S:/Documents/UNIVERSITY/POSTGRADUATE/SLACKWARE/Flask/static/txt_files/'+'allel_frequency_data.txt'
+                file_path = '/Users/karch/Desktop/QMUL/git/Group_project_repo/Flask/static/txt_files/'+'allel_frequency_data.txt' #CHANGE PATH
 
                 # Save DataFrame to a text file
                 data3.to_csv(file_path, sep=',', index=False)
-
+                session['invalid_input'] = 'valid'
                 print(f"DataFrame saved as text file: {file_path}")
         else:
                 print("DataFrame is empty. Skipping table image creation.")
+                session['invalid_input'] = 'invalid'
+
         
         if ((":" in selected_SNPid or ";" in selected_SNPid or selected_SNPid.startswith("rs")) or len(selected_gene) > 0 or (len(selected_genomic_start) > 0 and len(selected_genomic_end) > 0)) and len(selected_populations) > 1:
             genotype_columns = [col for col in data3.columns if col.endswith('_ref')]
@@ -253,14 +278,14 @@ def analysis():
             Fst_matrix = helper.calculate_fst(data3, pop_names)
 
             # Write Fst matrix to a text file
-            with open('S:/Documents/UNIVERSITY/POSTGRADUATE/SLACKWARE/Flask/static/txt_files/'+"Fst_matrix.txt", "w") as f:
+            with open('/Users/karch/Desktop/QMUL/git/Group_project_repo/Flask/static/txt_files/'+"Fst_matrix.txt", "w") as f: #CHANGE PATH
                 f.write("Fst matrix:\n")
                 f.write("\t" + "\t".join(pop_names) + "\n")
                 for i in range(len(pop_names)):
                     f.write(pop_names[i] + "\t" + "\t".join(map(str, Fst_matrix[i])) + "\n")
 
             # Create heatmap
-            plt.figure(figsize=(8, 6))
+            plt.figure(figsize=(20, 15))
             plt.imshow(Fst_matrix, cmap='hot', interpolation='nearest')
             plt.colorbar(label='Fst values')
             plt.title('Fst Matrix')
@@ -274,7 +299,7 @@ def analysis():
             plt.xlabel('Populations')
             plt.ylabel('Populations')
             plt.tight_layout()
-            plt.savefig('S:/Documents/UNIVERSITY/POSTGRADUATE/SLACKWARE/Flask/static/images/'+'fst_plot.png')
+            plt.savefig('/Users/karch/Desktop/QMUL/git/Group_project_repo/Flask/static/images/'+'fst_plot.png') #CHANGE PATH
             plt.close()
        
         else: 
@@ -287,16 +312,18 @@ def analysis():
         data4= helper.get_genotype_frequency(selected_SNPid, selected_gene, selected_genomic_start, selected_genomic_end, selected_populations, connection)
 
         if not data4.empty:
+                
+                data4 = data4.sort_values(by='pos')
                 # Specify the file path
-                file_path = 'S:/Documents/UNIVERSITY/POSTGRADUATE/SLACKWARE/Flask/static/txt_files/'+'Genotype_frequency_data.txt'
+                file_path = '/Users/karch/Desktop/QMUL/git/Group_project_repo/Flask/static/txt_files/'+'Genotype_frequency_data.txt' #CHANGE PATH
 
                 # Save DataFrame to a text file
                 data4.to_csv(file_path, sep=',', index=False)
-
+                session['invalid_input'] = 'valid'
                 print(f"DataFrame saved as text file: {file_path}")
         else:
                 print("DataFrame is empty. Skipping table image creation.")
-
+                session['invalid_input'] = 'invalid'
         """
 
         Call method to display pairwise popualtion matrix and visualise it
@@ -341,7 +368,7 @@ def results():
     rows_per_page = 10
 
     # Clinical Data
-    clinical_data_path = 'S:/Documents/UNIVERSITY/POSTGRADUATE/SLACKWARE/Flask/static/txt_files/Clinical_data.txt'
+    clinical_data_path = '/Users/karch/Desktop/QMUL/git/Group_project_repo/Flask/static/txt_files/Clinical_data.txt' #CHANGE PATH
     if os.path.exists(clinical_data_path):
         clinical_skip = (clinical_page - 1) * rows_per_page
         clinical_df = pd.read_csv(clinical_data_path, skiprows=range(1, clinical_skip + 1), nrows=rows_per_page)
@@ -350,7 +377,7 @@ def results():
         more_rows_clinical = not next_page_clinical_df.empty
 
     # Allele Frequency Data
-    allele_data_path = 'S:/Documents/UNIVERSITY/POSTGRADUATE/SLACKWARE/Flask/static/txt_files/allel_frequency_data.txt'
+    allele_data_path = '/Users/karch/Desktop/QMUL/git/Group_project_repo/Flask/static/txt_files/allel_frequency_data.txt' #CHANGE PATH
     if os.path.exists(allele_data_path):
         allele_skip = (allele_page - 1) * rows_per_page
         allele_df = pd.read_csv(allele_data_path, skiprows=range(1, allele_skip + 1), nrows=rows_per_page)
@@ -359,7 +386,7 @@ def results():
         more_rows_allele = not next_page_allele_df.empty
 
     # Genotype Frequency Data
-    genotype_data_path = 'S:/Documents/UNIVERSITY/POSTGRADUATE/SLACKWARE/Flask/static/txt_files/Genotype_frequency_data.txt'
+    genotype_data_path = '/Users/karch/Desktop/QMUL/git/Group_project_repo/Flask/static/txt_files/Genotype_frequency_data.txt' #CHANGE PATH
     if os.path.exists(genotype_data_path):
         genotype_skip = (genotype_page - 1) * rows_per_page
         genotype_df = pd.read_csv(genotype_data_path, skiprows=range(1, genotype_skip + 1), nrows=rows_per_page)
@@ -368,7 +395,8 @@ def results():
         more_rows_genotype = not next_page_genotype_df.empty
     query_submitted = session.get('query_submitted', False)
     query_type = session.get('query_type', None)
-    return render_template('results.html', query_submitted=query_submitted, query_type=query_type, pca_image=pca_image, adm_image=adm_image, fst_image=fst_image, fst_matrix_exists=fst_matrix_exists, clinical_table=clinical_html, clinical_page=clinical_page, more_rows_clinical=more_rows_clinical, allele_table=allele_html, allele_page=allele_page, more_rows_allele=more_rows_allele, genotype_table=genotype_html, genotype_page=genotype_page, more_rows_genotype=more_rows_genotype)
+    invalid_input = session.get('invalid_input', None)
+    return render_template('results.html', invalid_input=invalid_input, query_submitted=query_submitted, query_type=query_type, pca_image=pca_image, adm_image=adm_image, fst_image=fst_image, fst_matrix_exists=fst_matrix_exists, clinical_table=clinical_html, clinical_page=clinical_page, more_rows_clinical=more_rows_clinical, allele_table=allele_html, allele_page=allele_page, more_rows_allele=more_rows_allele, genotype_table=genotype_html, genotype_page=genotype_page, more_rows_genotype=more_rows_genotype)
 
 if __name__ == '__main__':
     app.run(debug=True)

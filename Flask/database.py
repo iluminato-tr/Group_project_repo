@@ -1,10 +1,14 @@
 import psycopg2
+""" 
+CHANGE TO YOUR DATABASE INFORMATION
+
+"""
 def setup():
     host = "localhost"
     port = "5432"    
     user = "postgres"
-    password = "K@r@m14"
-    database = "postgres"  
+    password = "Poojita15$"
+    database = "populationgenetics"   
     try:
         # Establish a connection
         connection = psycopg2.connect(
