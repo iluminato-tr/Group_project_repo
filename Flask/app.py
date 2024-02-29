@@ -154,10 +154,10 @@ def population_analysis():
         admixture_plot_filename = "adm_plot.png"
 
         if len(SelPop_populations) > 0:
-            pca_plot_filename = helper.plot_pca(data, 'population_code', SelPop_populations, pca_plot_filename)
+            pca_plot_filename = helper.plot_pca(data, 'population', SelPop_populations, pca_plot_filename)
         else:
             # Plot based on superpopulations (P2)
-            pca_plot_filename = helper.plot_pca(data, 'superpopulation_code', SelPop_populations, pca_plot_filename) 
+            pca_plot_filename = helper.plot_pca(data, 'superpopulation', SelPop_populations, pca_plot_filename) 
         
         """
         call method to plot admixture result
@@ -165,10 +165,10 @@ def population_analysis():
         """
 
         if len(SelPop_populations) > 0:
-            admixture_plot_filename = helper.plot_adm(data1, 'population_code', SelPop_populations, admixture_plot_filename) 
+            admixture_plot_filename = helper.plot_adm(data1, 'population', SelPop_populations, admixture_plot_filename) 
         else:
             # Plot based on superpopulations (P2)
-            admixture_plot_filename = helper.plot_adm(data1, 'superpopulation_code', SelPop_populations, admixture_plot_filename) 
+            admixture_plot_filename = helper.plot_adm(data1, 'superpopulation', SelPop_populations, admixture_plot_filename) 
         session['pca_image'] = pca_plot_filename
         session['adm_image'] = admixture_plot_filename
         session['query_submitted'] = True

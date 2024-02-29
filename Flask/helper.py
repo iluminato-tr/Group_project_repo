@@ -326,6 +326,7 @@ def get_genotype_frequency(selected_SNPid, selected_gene, selected_genomic_start
 
     return data4
 
+
 def calculate_fst(data, pop_names):
     # Identify genotype columns
     genotype_columns = [col for col in data.columns if col.endswith('_ref') or col.endswith('_alt')]
@@ -377,10 +378,6 @@ def calculate_fst(data, pop_names):
                     Fst_matrix[j, i] = np.nan
                     continue
 
-                # Compute allele frequencies
-                allele_freqs_pop1 = pop1_counts / pop1_total
-                allele_freqs_pop2 = pop2_counts / pop2_total
-
                 # Calculate Fst using the Weir and Cockerham method
                 Fst_ij = (Ht - (Hs[i] + Hs[j]) / 2) / Ht
 
@@ -388,3 +385,4 @@ def calculate_fst(data, pop_names):
                 Fst_matrix[j, i] = Fst_ij  # Assign to the symmetric position as well
 
     return Fst_matrix
+    
