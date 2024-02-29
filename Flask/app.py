@@ -246,7 +246,7 @@ def analysis():
         else:
                 print("DataFrame is empty. Skipping table image creation.")
                 session['invalid_input'] = 'invalid'
-        
+            
 
         """
         call method to display allele frequencies for gene, snpid and genomic coordinates.
@@ -268,7 +268,7 @@ def analysis():
         else:
                 print("DataFrame is empty. Skipping table image creation.")
                 session['invalid_input'] = 'invalid'
-                return
+        
 
         
         if ((":" in selected_SNPid or ";" in selected_SNPid or selected_SNPid.startswith("rs")) or len(selected_gene) > 0 or (len(selected_genomic_start) > 0 and len(selected_genomic_end) > 0)) and len(selected_populations) > 1:
@@ -279,8 +279,6 @@ def analysis():
                 pop_names.append(i[:3])
             
             Fst_matrix = helper.calculate_fst(data3, pop_names)
-
-
             # Write Fst matrix to a text file
             with open('/Users/karch/Desktop/QMUL/git/Group_project_repo/Flask/static/txt_files/'+"Fst_matrix.txt", "w") as f: #CHANGE PATH
                 f.write("Fst matrix:\n")
@@ -328,6 +326,7 @@ def analysis():
         else:
                 print("DataFrame is empty. Skipping table image creation.")
                 session['invalid_input'] = 'invalid'
+            
         """
 
         Call method to display pairwise popualtion matrix and visualise it
