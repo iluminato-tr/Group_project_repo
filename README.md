@@ -29,7 +29,12 @@ Ensure that the database connection details (e.g., database URL, username, passw
 
 #Run the application server
 
-Run the application server to start the population genetics web application. This will launch the Flask development server, which hosts the web application locally on your machine. You will see the output in the terminal indicating that the server is running.
+Before running the application server change the paths to files in the app.py, helper.py and chnage the database name and password in the database.py to start the population genetics web application. Once chnages have been made run the files in this order:
+1. database.py
+2. helper.py
+3. app.py
+
+This will launch the Flask development server, which hosts the web application locally on your machine. You will see the output in the terminal indicating that the server is running.
 
 2. Usage
 
@@ -41,14 +46,14 @@ Alternatively, if the application is deployed to a remote server, access it by e
 
 Navigating the Application
 
-Use the navigation menu provided on the web application's interface to access different features and functionalities. The navigation menu typically includes options such as "Population Analysis," "SNP Analysis," and "Analysis Results," among others.
+Use the navigation menu provided on the web application's interface to access different features and functionalities. The navigation menu typically includes options such as "Home" "Population Analysis," "SNP Analysis," and "Analysis Results," among others.
 
 Click on the respective menu items to navigate to the desired section of the application and access the corresponding features and tools.
 
 Performing Analysis
 
-Follow the instructions provided on each page to input parameters, select populations, and visualize results for each analysis. The application typically provides input fields, dropdown menus, and buttons to facilitate user interaction and input.
+Follow the instructions provided to input parameters, select populations, and visualize results for each analysis. The application typically provides input fields, dropdown menus, and buttons to facilitate user interaction and input.
 
-Refer to the documentation, tooltips, or help sections provided within the application for additional guidance on how to use specific features and tools effectively.
+Refer to the documentation, sugestion sections provided within the application for additional guidance on how to use specific features and tools effectively.
 
 Explore the various analysis options and functionalities available in the application to gain insights into population genetics data and interpret analysis results accurately.
