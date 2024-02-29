@@ -4,6 +4,7 @@ import matplotlib
 import seaborn as sns
 matplotlib.use('Agg') # Set the backend to 'Agg' before importing pyplot
 import matplotlib.pyplot as plt
+from flask import session
 
 def get_population_data(SelPop_populations, SelPop_superpopulations, connection):
     """
@@ -212,7 +213,11 @@ def get_clinical_data(selected_SNPid, selected_gene, selected_genomic_start, sel
         value2 = {'start': selected_genomic_start, 'end': selected_genomic_end}
     else:
         # Handle other cases if needed
+
         print("Clinical relevance not provided")
+        session['invalid_input'] = 'invalid'
+
+        return
 
     data2 = pd.read_sql_query(snpclinical_query, connection, params=value2)
 
@@ -264,6 +269,8 @@ def get_allele_frequency(selected_SNPid, selected_gene, selected_genomic_start, 
 
     else: 
         print('Allele frequency not provided')
+        session['invalid_input'] = 'invalid'
+        return
 
     data3= pd.read_sql_query(allele_query, connection, params=value3)
 
@@ -315,6 +322,8 @@ def get_genotype_frequency(selected_SNPid, selected_gene, selected_genomic_start
 
     else: 
         print('Allele frequency not provided')
+        session['invalid_input'] = 'invalid'
+        return
 
     data4= pd.read_sql_query(genotype_query, connection, params=value4)
 
@@ -393,5 +402,3 @@ def calculate_fst(data, pop_names):
                 Fst_matrix[j, i] = Fst_ij  # Assign to the symmetric position as well
 
     return Fst_matrix
-
-
