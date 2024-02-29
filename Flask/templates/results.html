@@ -27,7 +27,7 @@
                 {% elif query_type == 'snp_analysis' and invalid_input == 'valid' %}
                     
                     <!-- Display FST Results if available -->
-                    {% if fst_image and session.selected_populations_count > 1 %}
+                    {% if fst_image and session.selected_populations_count > 1 and invalid_input == 'valid' %}
                         <div id="fst-results">
                             <h2>FST Results</h2>
                             <img src="{{ url_for('static', filename='images/' + fst_image) }}" alt="FST Results" style="max-width: 100%;">
