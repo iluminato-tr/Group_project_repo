@@ -54,6 +54,6 @@ Performing Analysis
 
 Follow the instructions provided to input parameters, select populations, and visualize results for each analysis. The application typically provides input fields, dropdown menus, and buttons to facilitate user interaction and input.
 
-Refer to the documentation, sugestion sections provided within the application for additional guidance on how to use specific features and tools effectively.
+Refer to the documentation, suggestion sections provided within the application for additional guidance on how to use specific features and tools effectively.
 
 Explore the various analysis options and functionalities available in the application to gain insights into population genetics data and interpret analysis results accurately.
